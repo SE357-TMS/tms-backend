@@ -9,11 +9,8 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "attraction")
-public class Attraction {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "attraction_id")
-    private Integer attractionId;
+public class Attraction extends AbstractBaseEntity {
+    // Inherit UUID id, createdAt, updatedAt, deleted from AbstractBaseEntity
 
     @Column(name = "name", nullable = false, length = 100)
     private String name;

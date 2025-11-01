@@ -1,0 +1,10 @@
+# Ignore build outputs
+/target/
+
+# IDE files
+/.idea/
+*.iml
+
+# Local environment files
+.env
+src/main/resources/.env

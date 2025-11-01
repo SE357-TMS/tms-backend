@@ -1,7 +1,14 @@
 package com.example.tms.enity;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Getter
@@ -9,11 +16,8 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "route")
-public class Route {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "route_id")
-    private Integer routeId;
+public class Route extends AbstractBaseEntity {
+    // Inherit UUID id, createdAt, updatedAt, deleted from AbstractBaseEntity
 
     @Column(name = "route_name", nullable = false, length = 100)
     private String routeName;

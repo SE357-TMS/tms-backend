@@ -1,8 +1,17 @@
 package com.example.tms.enity;
 
-import jakarta.persistence.*;
-import lombok.*;
 import java.time.LocalDate;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Getter
@@ -13,11 +22,8 @@ import java.time.LocalDate;
     @UniqueConstraint(columnNames = "username"),
     @UniqueConstraint(columnNames = "email")
 })
-public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
-    private Integer userId;
+public class User extends AbstractBaseEntity {
+    // Inherit UUID id, createdAt, updatedAt, deleted from AbstractBaseEntity
 
     @Column(name = "username", nullable = false, length = 50, unique = true)
     private String username;
