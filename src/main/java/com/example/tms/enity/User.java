@@ -19,13 +19,18 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "user", uniqueConstraints = {
-    @UniqueConstraint(columnNames = "username"),
-    @UniqueConstraint(columnNames = "email")
+    // Composite unique: (username, deleted_at)
+    // Allows same username if one is deleted (deleted_at != 0)
+    @UniqueConstraint(name = "uk_username_deleted", columnNames = {"username", "deleted_at"}),
+    
+    // Composite unique: (email, deleted_at)
+    // Allows same email if one is deleted (deleted_at != 0)
+    @UniqueConstraint(name = "uk_email_deleted", columnNames = {"email", "deleted_at"})
 })
 public class User extends AbstractBaseEntity {
-    // Inherit UUID id, createdAt, updatedAt, deleted from AbstractBaseEntity
+    // Inherit UUID id, createdAt, updatedAt, deletedAt, version from AbstractBaseEntity
 
-    @Column(name = "username", nullable = false, length = 50, unique = true)
+    @Column(name = "username", nullable = false, length = 50)
     private String username;
 
     @Column(name = "user_password", nullable = false, length = 255)
@@ -37,7 +42,7 @@ public class User extends AbstractBaseEntity {
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
 
-    @Column(name = "email", nullable = false, length = 100, unique = true)
+    @Column(name = "email", nullable = false, length = 100)
     private String email;
 
     @Column(name = "phone_number", length = 20)

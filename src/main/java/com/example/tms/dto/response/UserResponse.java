@@ -27,6 +27,7 @@ public class UserResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Boolean deleted;
+    private Long version; // For optimistic locking
     
     public UserResponse(User user) {
         this.id = user.getId();
@@ -42,5 +43,6 @@ public class UserResponse {
         this.createdAt = user.getCreatedAt();
         this.updatedAt = user.getUpdatedAt();
         this.deleted = user.isDeleted();
+        this.version = user.getVersion();
     }
 }
