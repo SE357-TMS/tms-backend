@@ -1,0 +1,173 @@
+package com.example.tms.controller;
+
+import com.example.tms.dto.response.ApiResponse;
+import com.example.tms.dto.response.ImageUploadResponse;
+import com.example.tms.repository.UserRepository;
+import com.example.tms.service.interface_.CloudinaryService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/v1/images")
+@RequiredArgsConstructor
+public class ImageController {
+
+    private final CloudinaryService cloudinaryService;
+    private final UserRepository userRepository;
+
+    /**/
+    /*
+     * Upload user avatar
+     * - CUSTOMER: Can only upload their own avatar
+     * - ADMIN/STAFF: Can upload any user's avatar
+     */
+    @PostMapping(value = "/users/{userId}/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyAuthority('CUSTOMER', 'STAFF', 'ADMIN')")
+    public ApiResponse<ImageUploadResponse> uploadUserAvatar(
+            @PathVariable UUID userId,
+            @RequestParam("file") MultipartFile file,
+            Authentication authentication) {
+        
+        // Check permission: CUSTOMER can only upload their own avatar
+        checkUserPermission(userId, authentication);
+        
+        // Verify user exists
+        userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        
+        String imageUrl = cloudinaryService.uploadUserAvatar(file, userId);
+        ImageUploadResponse response = new ImageUploadResponse(imageUrl, "Avatar uploaded successfully");
+        
+        return ApiResponse.success("Avatar uploaded successfully", response);
+    }
+
+    /**
+     * Upload user image with index (for multiple images)
+     * - CUSTOMER: Can only upload their own images
+     * - ADMIN/STAFF: Can upload any user's images
+     */
+    @PostMapping(value = "/users/{userId}/images/{index}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyAuthority('CUSTOMER', 'STAFF', 'ADMIN')")
+    public ApiResponse<ImageUploadResponse> uploadUserImage(
+            @PathVariable UUID userId,
+            @PathVariable int index,
+            @RequestParam("file") MultipartFile file,
+            Authentication authentication) {
+        
+        // Check permission
+        checkUserPermission(userId, authentication);
+        
+        // Verify user exists
+        userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        
+        if (index < 1 || index > 10) {
+            throw new IllegalArgumentException("Image index must be between 1 and 10");
+        }
+        
+        String imageUrl = cloudinaryService.uploadUserImage(file, userId, index);
+        ImageUploadResponse response = new ImageUploadResponse(
+                imageUrl, 
+                "Image " + index + " uploaded successfully"
+        );
+        
+        return ApiResponse.success("Image uploaded successfully", response);
+    }
+
+    /**
+     * Get user avatar URL
+     * - PUBLIC: Anyone can view user avatars
+     */
+    @GetMapping("/users/{userId}/avatar")
+    public ApiResponse<ImageUploadResponse> getUserAvatar(@PathVariable UUID userId) {
+        // Verify user exists
+        userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        
+        String imageUrl = cloudinaryService.getUserAvatarUrl(userId);
+        
+        if (imageUrl == null) {
+            return ApiResponse.success("User has no avatar", null);
+        }
+        
+        ImageUploadResponse response = new ImageUploadResponse(imageUrl, "Avatar retrieved successfully");
+        return ApiResponse.success("Avatar retrieved successfully", response);
+    }
+
+    /**
+     * Delete user avatar
+     * - CUSTOMER: Can only delete their own avatar
+     * - ADMIN/STAFF: Can delete any user's avatar
+     */
+    @DeleteMapping("/users/{userId}/avatar")
+    @PreAuthorize("hasAnyAuthority('CUSTOMER', 'STAFF', 'ADMIN')")
+    public ApiResponse<String> deleteUserAvatar(
+            @PathVariable UUID userId,
+            Authentication authentication) {
+        
+        // Check permission
+        checkUserPermission(userId, authentication);
+        
+        // Verify user exists
+        userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        
+        cloudinaryService.deleteUserAvatar(userId);
+        return ApiResponse.success("Avatar deleted successfully");
+    }
+
+    /**
+     * Delete user image by index
+     * - CUSTOMER: Can only delete their own images
+     * - ADMIN/STAFF: Can delete any user's images
+     */
+    @DeleteMapping("/users/{userId}/images/{index}")
+    @PreAuthorize("hasAnyAuthority('CUSTOMER', 'STAFF', 'ADMIN')")
+    public ApiResponse<String> deleteUserImage(
+            @PathVariable UUID userId,
+            @PathVariable int index,
+            Authentication authentication) {
+        
+        // Check permission
+        checkUserPermission(userId, authentication);
+        
+        // Verify user exists
+        userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        
+        if (index < 1 || index > 10) {
+            throw new IllegalArgumentException("Image index must be between 1 and 10");
+        }
+        
+        cloudinaryService.deleteUserImage(userId, index);
+        return ApiResponse.success("Image " + index + " deleted successfully");
+    }
+
+    /**
+     * Check if user has permission to modify images
+     * CUSTOMER can only modify their own images
+     * ADMIN/STAFF can modify any user's images
+     */
+    private void checkUserPermission(UUID userId, Authentication authentication) {
+        String username = authentication.getName();
+        var currentUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Current user not found"));
+        
+        // ADMIN and STAFF can modify any user's images
+        if (currentUser.getRole().name().equals("ADMIN") || 
+            currentUser.getRole().name().equals("STAFF")) {
+            return;
+        }
+        
+        // CUSTOMER can only modify their own images
+        if (!currentUser.getId().equals(userId)) {
+            throw new RuntimeException("You don't have permission to modify this user's images");
+        }
+    }
+}

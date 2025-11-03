@@ -35,6 +35,7 @@ public class SecurityConfig {
             .httpBasic(Customizer.withDefaults())
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/auth/**").permitAll()
+                    .requestMatchers("/api/v1/images/users/*/avatar").permitAll() // Public access to view avatars
                     .requestMatchers("/admin/**").hasAuthority("ADMIN")
                     .requestMatchers("/staff/**").hasAuthority("STAFF")
                     .requestMatchers("/customer/**").hasAuthority("CUSTOMER")
