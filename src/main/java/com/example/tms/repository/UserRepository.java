@@ -20,6 +20,10 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 	@Query("SELECT COUNT(u) > 0 FROM User u WHERE u.email = :email AND u.deletedAt = 0")
 	boolean existsByEmail(@Param("email") String email);
 	
+	// Find user by email (only ACTIVE users)
+	@Query("SELECT u FROM User u WHERE u.email = :email AND u.deletedAt = 0")
+	Optional<User> findByEmail(@Param("email") String email);
+	
 	// Check if username exists for another ACTIVE user (excluding current user)
 	@Query("SELECT COUNT(u) > 0 FROM User u WHERE u.username = :username AND u.id != :userId AND u.deletedAt = 0")
 	boolean existsByUsernameAndIdNot(@Param("username") String username, @Param("userId") UUID userId);

@@ -97,6 +97,12 @@
             <artifactId>cloudinary-http45</artifactId>
             <version>1.38.0</version>
         </dependency>
+        <!-- SendGrid for email -->
+        <dependency>
+            <groupId>com.sendgrid</groupId>
+            <artifactId>sendgrid-java</artifactId>
+            <version>4.10.2</version>
+        </dependency>
     </dependencies>
 
     <build>
