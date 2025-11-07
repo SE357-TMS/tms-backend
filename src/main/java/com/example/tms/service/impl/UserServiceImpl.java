@@ -6,7 +6,10 @@ import java.util.stream.Collectors;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -14,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.tms.dto.request.CreateUserRequest;
 import com.example.tms.dto.request.UpdateUserRequest;
+import com.example.tms.dto.request.UserFilterRequest;
+import com.example.tms.dto.response.PaginationResponse;
 import com.example.tms.dto.response.UserResponse;
 import com.example.tms.enity.User;
 import com.example.tms.repository.UserRepository;
@@ -76,6 +81,92 @@ public class UserServiceImpl implements UserService {
         return new UserResponse(user);
     }
 
+    /**
+     * Get all users with filtering, pagination and sorting
+     * ✅ New method using DTO pattern
+     */
+    @Override
+    public PaginationResponse<UserResponse> getAllUsers(UserFilterRequest filter) {
+        // Build specification for filtering
+        Specification<User> spec = buildUserSpecification(filter);
+        
+        // Build sort
+        Sort sort = Sort.by(
+            filter.getSortDirection().equalsIgnoreCase("ASC") 
+                ? Sort.Direction.ASC 
+                : Sort.Direction.DESC,
+            filter.getSortBy()
+        );
+        
+        // Build pageable
+        Pageable pageable = PageRequest.of(filter.getPage(), filter.getSize(), sort);
+        
+        // Execute query
+        Page<User> userPage = userRepository.findAll(spec, pageable);
+        
+        // Map to response
+        List<UserResponse> userResponses = userPage.getContent().stream()
+                .map(UserResponse::new)
+                .collect(Collectors.toList());
+        
+        return new PaginationResponse<>(userPage, userResponses);
+    }
+
+    /**
+     * Build Specification for user filtering
+     */
+    private Specification<User> buildUserSpecification(UserFilterRequest filter) {
+        Specification<User> spec = (root, query, cb) -> cb.equal(cb.literal(1), 1); // Always true
+        
+        // Filter by deleted status
+        if (filter.getIncludeDeleted() != null && filter.getIncludeDeleted()) {
+            // Include all users (no filter on deletedAt)
+        } else {
+            // Only active users
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("deletedAt"), 0L));
+        }
+        
+        // Filter by keyword (username, email, fullName)
+        if (filter.getKeyword() != null && !filter.getKeyword().trim().isEmpty()) {
+            String keyword = "%" + filter.getKeyword().trim().toLowerCase() + "%";
+            spec = spec.and((root, query, cb) -> cb.or(
+                cb.like(cb.lower(root.get("username")), keyword),
+                cb.like(cb.lower(root.get("email")), keyword),
+                cb.like(cb.lower(root.get("fullName")), keyword)
+            ));
+        }
+        
+        // Filter by role
+        if (filter.getRole() != null && !filter.getRole().trim().isEmpty()) {
+            try {
+                User.Role role = User.Role.valueOf(filter.getRole().toUpperCase());
+                spec = spec.and((root, query, cb) -> cb.equal(root.get("role"), role));
+            } catch (IllegalArgumentException e) {
+                // Invalid role, ignore filter
+            }
+        }
+        
+        // Filter by lock status
+        if (filter.getIsLock() != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("isLock"), filter.getIsLock()));
+        }
+        
+        // Filter by gender
+        if (filter.getGender() != null && !filter.getGender().trim().isEmpty()) {
+            try {
+                User.Gender gender = User.Gender.valueOf(filter.getGender().toUpperCase());
+                spec = spec.and((root, query, cb) -> cb.equal(root.get("gender"), gender));
+            } catch (IllegalArgumentException e) {
+                // Invalid gender, ignore filter
+            }
+        }
+        
+        return spec;
+    }
+
+    /**
+     * Legacy method - get all users without pagination
+     */
     @Override
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll().stream()
@@ -83,6 +174,10 @@ public class UserServiceImpl implements UserService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Legacy method - get all users with pagination
+     * @deprecated Use {@link #getAllUsers(UserFilterRequest)} instead
+     */
     @Override
     public Page<UserResponse> getAllUsersWithPagination(Pageable pageable, boolean includeDeleted) {
         Page<User> userPage;

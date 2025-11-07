@@ -8,13 +8,21 @@ import org.springframework.data.domain.Pageable;
 
 import com.example.tms.dto.request.CreateUserRequest;
 import com.example.tms.dto.request.UpdateUserRequest;
+import com.example.tms.dto.request.UserFilterRequest;
+import com.example.tms.dto.response.PaginationResponse;
 import com.example.tms.dto.response.UserResponse;
 
 public interface UserService {
     UserResponse createUser(CreateUserRequest request);
     UserResponse getUserById(UUID id);
+    
+    // New method with filter DTO
+    PaginationResponse<UserResponse> getAllUsers(UserFilterRequest filter);
+    
+    // Legacy methods (keep for backward compatibility)
     List<UserResponse> getAllUsers();
     Page<UserResponse> getAllUsersWithPagination(Pageable pageable, boolean includeDeleted);
+    
     UserResponse updateUser(UUID id, UpdateUserRequest request);
     void deleteUser(UUID id);
     List<UserResponse> getUsersByRole(String role);

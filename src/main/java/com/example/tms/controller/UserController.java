@@ -3,25 +3,22 @@ package com.example.tms.controller;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.tms.dto.request.CreateUserRequest;
 import com.example.tms.dto.request.UpdateUserRequest;
+import com.example.tms.dto.request.UserFilterRequest;
 import com.example.tms.dto.response.ApiResponse;
 import com.example.tms.dto.response.PaginationResponse;
 import com.example.tms.dto.response.UserResponse;
@@ -52,42 +49,30 @@ public class UserController {
     }
 
     /**
-     * Get all users with pagination
-     * @param page Current page (default: 0)
-     * @param size Items per page (default: 10)
-     * @param sortBy Sort field (default: createdAt)
-     * @param sortType Sort direction: asc or desc (default: desc)
-     * @param includeDeleted Include deleted users (default: true for admin view)
-     * @return Paginated user list
+     * Get all users with pagination and filtering
+     * ✅ REFACTORED: Use DTO instead of multiple @RequestParam
      */
     @GetMapping
     public ResponseEntity<ApiResponse<PaginationResponse<UserResponse>>> getAllUsers(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortType,
-            @RequestParam(defaultValue = "true") boolean includeDeleted
-    ) {
-        Sort sort = sortType.equalsIgnoreCase("asc") 
-                ? Sort.by(sortBy).ascending() 
-                : Sort.by(sortBy).descending();
+            @ModelAttribute UserFilterRequest filter) {
+        PaginationResponse<UserResponse> response = userService.getAllUsers(filter);
         
-        Pageable pageable = PageRequest.of(page, size, sort);
-        Page<UserResponse> userPage = userService.getAllUsersWithPagination(pageable, includeDeleted);
-        
-        PaginationResponse<UserResponse> paginationResponse = new PaginationResponse<>(
-                userPage,
-                userPage.getContent()
-        );
+        if (response.getItems().isEmpty()) {
+            return ResponseEntity.ok(
+                ApiResponse.success("No users found matching the criteria", response)
+            );
+        }
         
         return ResponseEntity.ok(
-                ApiResponse.success("Users retrieved successfully", paginationResponse)
+            ApiResponse.success("Users retrieved successfully", response)
         );
     }
 
     /**
      * Get all users without pagination (for backward compatibility)
+     * ⚠️ DEPRECATED: Use GET /admin/users with pagination instead
      */
+    @Deprecated
     @GetMapping("/all")
     public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsersNoPagination() {
         List<UserResponse> response = userService.getAllUsers();
@@ -110,28 +95,22 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("User deleted successfully"));
     }
 
+    /**
+     * Get users by role with pagination
+     * ✅ REFACTORED: Simplified by using filter DTO
+     * Note: Can also use main endpoint with ?role=STAFF filter
+     */
     @GetMapping("/role/{role}")
     public ResponseEntity<ApiResponse<PaginationResponse<UserResponse>>> getUsersByRole(
             @PathVariable String role,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortType
-    ) {
-        Sort sort = sortType.equalsIgnoreCase("asc") 
-                ? Sort.by(sortBy).ascending() 
-                : Sort.by(sortBy).descending();
+            @ModelAttribute UserFilterRequest filter) {
+        // Override role in filter
+        filter.setRole(role);
         
-        Pageable pageable = PageRequest.of(page, size, sort);
-        Page<UserResponse> userPage = userService.getUsersByRoleWithPagination(role, pageable);
-        
-        PaginationResponse<UserResponse> paginationResponse = new PaginationResponse<>(
-                userPage,
-                userPage.getContent()
-        );
+        PaginationResponse<UserResponse> response = userService.getAllUsers(filter);
         
         return ResponseEntity.ok(
-                ApiResponse.success("Users retrieved successfully", paginationResponse)
+            ApiResponse.success("Users retrieved successfully", response)
         );
     }
 }
