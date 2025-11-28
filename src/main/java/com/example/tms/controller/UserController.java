@@ -24,6 +24,11 @@ import com.example.tms.dto.response.PaginationResponse;
 import com.example.tms.dto.response.UserResponse;
 import com.example.tms.service.interface_.UserService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -31,10 +36,20 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/admin/users")
 @PreAuthorize("hasAnyAuthority('ADMIN', 'STAFF')")
 @RequiredArgsConstructor
+@Tag(name = "User Management", description = "APIs for managing users and customers")
+@SecurityRequirement(name = "Bearer Authentication")
 public class UserController {
 
     private final UserService userService;
 
+    @Operation(
+        summary = "Create user",
+        description = "Create a new user account"
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "User created successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input")
+    })
     @PostMapping
     public ResponseEntity<ApiResponse<UserResponse>> createUser(@Valid @RequestBody CreateUserRequest request) {
         UserResponse response = userService.createUser(request);
@@ -42,16 +57,28 @@ public class UserController {
                 .body(ApiResponse.success("User created successfully", response));
     }
 
+    @Operation(
+        summary = "Get user by ID",
+        description = "Retrieve user details by their unique identifier"
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User retrieved successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found")
+    })
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<UserResponse>> getUserById(
+            @Parameter(description = "User ID") @PathVariable UUID id) {
         UserResponse response = userService.getUserById(id);
         return ResponseEntity.ok(ApiResponse.success("User retrieved successfully", response));
     }
 
-    /**
-     * Get all users with pagination and filtering
-     * ✅ REFACTORED: Use DTO instead of multiple @RequestParam
-     */
+    @Operation(
+        summary = "Get all users",
+        description = "Retrieve a paginated list of users with optional filters"
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Users retrieved successfully")
+    })
     @GetMapping
     public ResponseEntity<ApiResponse<PaginationResponse<UserResponse>>> getAllUsers(
             @ModelAttribute UserFilterRequest filter) {
@@ -68,10 +95,10 @@ public class UserController {
         );
     }
 
-    /**
-     * Get all users without pagination (for backward compatibility)
-     * ⚠️ DEPRECATED: Use GET /admin/users with pagination instead
-     */
+    @Operation(
+        summary = "Get all users (no pagination)",
+        description = "Retrieve all users without pagination. Deprecated - use GET /admin/users instead"
+    )
     @Deprecated
     @GetMapping("/all")
     public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsersNoPagination() {
@@ -81,28 +108,47 @@ public class UserController {
         );
     }
 
+    @Operation(
+        summary = "Update user",
+        description = "Update user information by ID"
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User updated successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found")
+    })
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<UserResponse>> updateUser(
-            @PathVariable UUID id,
+            @Parameter(description = "User ID") @PathVariable UUID id,
             @Valid @RequestBody UpdateUserRequest request) {
         UserResponse response = userService.updateUser(id, request);
         return ResponseEntity.ok(ApiResponse.success("User updated successfully", response));
     }
 
+    @Operation(
+        summary = "Delete user",
+        description = "Delete a user by ID (soft delete)"
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User deleted successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found")
+    })
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<Void>> deleteUser(
+            @Parameter(description = "User ID") @PathVariable UUID id) {
         userService.deleteUser(id);
         return ResponseEntity.ok(ApiResponse.success("User deleted successfully"));
     }
 
-    /**
-     * Get users by role with pagination
-     * ✅ REFACTORED: Simplified by using filter DTO
-     * Note: Can also use main endpoint with ?role=STAFF filter
-     */
+    @Operation(
+        summary = "Get users by role",
+        description = "Retrieve users filtered by their role (ADMIN, STAFF, CUSTOMER)"
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Users retrieved successfully")
+    })
     @GetMapping("/role/{role}")
     public ResponseEntity<ApiResponse<PaginationResponse<UserResponse>>> getUsersByRole(
-            @PathVariable String role,
+            @Parameter(description = "User role (ADMIN, STAFF, CUSTOMER)") @PathVariable String role,
             @ModelAttribute UserFilterRequest filter) {
         // Override role in filter
         filter.setRole(role);

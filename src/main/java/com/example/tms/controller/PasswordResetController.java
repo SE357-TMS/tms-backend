@@ -4,6 +4,10 @@ import com.example.tms.dto.request.ForgotPasswordRequest;
 import com.example.tms.dto.request.ResetPasswordRequest;
 import com.example.tms.dto.response.ApiResponse;
 import com.example.tms.service.interface_.PasswordResetService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -11,14 +15,18 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/auth/password")
 @RequiredArgsConstructor
+@Tag(name = "Password Reset", description = "APIs for password reset functionality")
 public class PasswordResetController {
 
     private final PasswordResetService passwordResetService;
 
-    /**
-     * Request password reset - Send email with reset token
-     * PUBLIC endpoint - no authentication required
-     */
+    @Operation(
+        summary = "Request password reset",
+        description = "Send password reset email with token to user's email address. Public endpoint - no authentication required."
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Password reset email sent successfully")
+    })
     @PostMapping("/forgot")
     public ApiResponse<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         try {
@@ -37,10 +45,14 @@ public class PasswordResetController {
         }
     }
 
-    /**
-     * Reset password using token
-     * PUBLIC endpoint - no authentication required
-     */
+    @Operation(
+        summary = "Reset password",
+        description = "Reset user password using the token received via email. Public endpoint - no authentication required."
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Password reset successful"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid or expired token")
+    })
     @PostMapping("/reset")
     public ApiResponse<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         passwordResetService.resetPassword(request.getToken(), request.getNewPassword());

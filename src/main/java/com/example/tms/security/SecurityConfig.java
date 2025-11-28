@@ -36,6 +36,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/auth/**").permitAll()
                     .requestMatchers("/api/v1/images/users/*/avatar").permitAll() // Public access to view avatars
+                    .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll() // Swagger UI
                     .requestMatchers("/admin/**").hasAuthority("ADMIN")
                     .requestMatchers("/staff/**").hasAuthority("STAFF")
                     .requestMatchers("/customer/**").hasAuthority("CUSTOMER")

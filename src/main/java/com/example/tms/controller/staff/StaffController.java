@@ -8,7 +8,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -25,134 +24,123 @@ import com.example.tms.dto.response.staff.StaffDetailResponse;
 import com.example.tms.dto.response.staff.StaffListResponse;
 import com.example.tms.service.interface_.StaffService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-/**
- * Staff Management Controller
- * Handles all CRUD operations for staff management
- * Only accessible by ADMIN role
- */
 @RestController
 @RequestMapping("/admin/staffs")
+@PreAuthorize("hasAnyAuthority('ADMIN', 'STAFF')")
 @RequiredArgsConstructor
-@Slf4j
-@PreAuthorize("hasRole('ADMIN')")
+@Tag(name = "Staff Management", description = "APIs for managing staff members")
+@SecurityRequirement(name = "Bearer Authentication")
 public class StaffController {
 
     private final StaffService staffService;
 
-    /**
-     * UC_STAFF_01: View and Filter Staffs
-     * GET /admin/staffs
-     * 
-     * Query Parameters:
-     * - keyword: Search by username, full_name, or email
-     * - phoneNumber: Filter by phone number
-     * - isLock: Filter by lock status (true/false)
-     * - gender: Filter by gender (M/F/O)
-     * - page: Page number (default: 0)
-     * - size: Page size (default: 10)
-     * - sortBy: Sort field (default: id)
-     * - sortDirection: Sort direction (default: DESC)
-     */
+    @Operation(
+        summary = "Get all staffs",
+        description = "Retrieve a paginated list of all staff members with optional filters"
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Staffs retrieved successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @GetMapping
     public ResponseEntity<ApiResponse<PagedResponseDto<StaffListResponse>>> getAllStaffs(
             @ModelAttribute StaffFilterRequest filter) {
-        log.info("Fetching staffs with filter: {}", filter);
+        PagedResponseDto<StaffListResponse> response = staffService.getAllStaffs(filter);
         
-        PagedResponseDto<StaffListResponse> staffs = staffService.getAllStaffs(filter);
-        
-        if (staffs.getContent().isEmpty()) {
+        if (response.getContent().isEmpty()) {
             return ResponseEntity.ok(
-                ApiResponse.success("No staff members found matching the criteria", staffs)
+                ApiResponse.success("No staff members found matching the criteria", response)
             );
         }
         
         return ResponseEntity.ok(
-            ApiResponse.success("Staff list retrieved successfully", staffs)
+            ApiResponse.success("Staffs retrieved successfully", response)
         );
     }
 
-    /**
-     * UC_STAFF_02: View Staff Details
-     * GET /admin/staffs/{staffId}
-     */
-    @GetMapping("/{staffId}")
-    public ResponseEntity<ApiResponse<StaffDetailResponse>> getStaffById(@PathVariable UUID staffId) {
-        log.info("Fetching staff details for ID: {}", staffId);
-        
-        StaffDetailResponse staff = staffService.getStaffById(staffId);
-        
-        return ResponseEntity.ok(
-            ApiResponse.success("Staff details retrieved successfully", staff)
-        );
+    @Operation(
+        summary = "Get staff by ID",
+        description = "Retrieve detailed information about a specific staff member"
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Staff retrieved successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Staff not found"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<StaffDetailResponse>> getStaffById(
+            @Parameter(description = "Staff ID", required = true) @PathVariable UUID id) {
+        StaffDetailResponse response = staffService.getStaffById(id);
+        return ResponseEntity.ok(ApiResponse.success("Staff retrieved successfully", response));
     }
 
-    /**
-     * UC_STAFF_03: Add New Staff
-     * POST /admin/staffs
-     */
+    @Operation(
+        summary = "Create new staff",
+        description = "Create a new staff member account with the provided information"
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Staff created successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input or username/email already exists"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @PostMapping
-    public ResponseEntity<ApiResponse<StaffDetailResponse>> addStaff(
+    public ResponseEntity<ApiResponse<StaffDetailResponse>> createStaff(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                description = "Staff information",
+                required = true
+            )
             @Valid @RequestBody AddStaffRequest request) {
-        log.info("Adding new staff with username: {}", request.getUsername());
-        
-        StaffDetailResponse staff = staffService.addStaff(request);
-        
-        return ResponseEntity.status(HttpStatus.CREATED).body(
-            ApiResponse.success("Staff account created successfully. Welcome email has been sent.", staff)
-        );
+        StaffDetailResponse response = staffService.createStaff(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Staff created successfully", response));
     }
 
-    /**
-     * UC_STAFF_04: Edit Staff
-     * PUT /admin/staffs/{staffId}
-     */
-    @PutMapping("/{staffId}")
+    @Operation(
+        summary = "Update staff",
+        description = "Update information of an existing staff member"
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Staff updated successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Staff not found"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<StaffDetailResponse>> updateStaff(
-            @PathVariable UUID staffId,
+            @Parameter(description = "Staff ID", required = true) @PathVariable UUID id,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                description = "Updated staff information",
+                required = true
+            )
             @Valid @RequestBody UpdateStaffRequest request) {
-        log.info("Updating staff with ID: {}", staffId);
-        
-        StaffDetailResponse staff = staffService.updateStaff(staffId, request);
-        
-        return ResponseEntity.ok(
-            ApiResponse.success("Staff information updated successfully", staff)
-        );
+        StaffDetailResponse response = staffService.updateStaff(id, request);
+        return ResponseEntity.ok(ApiResponse.success("Staff updated successfully", response));
     }
 
-    /**
-     * UC_STAFF_05: Lock/Unlock Staff (Soft Delete)
-     * PATCH /admin/staffs/{staffId}/toggle-lock
-     */
-    @PatchMapping("/{staffId}/toggle-lock")
-    public ResponseEntity<ApiResponse<Void>> toggleLockStaff(@PathVariable UUID staffId) {
-        log.info("Toggling lock status for staff: {}", staffId);
-        
-        staffService.toggleLockStaff(staffId);
-        
-        return ResponseEntity.ok(
-            ApiResponse.success("Staff account lock status updated successfully")
-        );
-    }
-
-    /**
-     * UC_STAFF_05: Delete Staff Permanently (Hard Delete)
-     * DELETE /admin/staffs/{staffId}
-     * 
-     * Warning: This is a permanent action and cannot be undone!
-     * Will fail if staff has pending/confirmed bookings.
-     */
-    @DeleteMapping("/{staffId}")
-    public ResponseEntity<ApiResponse<Void>> deleteStaffPermanently(@PathVariable UUID staffId) {
-        log.info("Attempting to permanently delete staff: {}", staffId);
-        
-        staffService.deleteStaffPermanently(staffId);
-        
-        return ResponseEntity.ok(
-            ApiResponse.success("Staff account deleted permanently")
-        );
+    @Operation(
+        summary = "Delete staff",
+        description = "Permanently delete a staff member account"
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Staff deleted successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Staff not found"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteStaff(
+            @Parameter(description = "Staff ID", required = true) @PathVariable UUID id) {
+        staffService.deleteStaff(id);
+        return ResponseEntity.ok(ApiResponse.success("Staff deleted successfully"));
     }
 }
