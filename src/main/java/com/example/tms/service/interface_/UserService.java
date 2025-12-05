@@ -14,6 +14,8 @@ import com.example.tms.dto.response.UserResponse;
 
 public interface UserService {
     UserResponse createUser(CreateUserRequest request);
+    // Admin-only: create a user with ADMIN role
+    UserResponse createAdmin(CreateUserRequest request);
     UserResponse getUserById(UUID id);
     
     // New method with filter DTO

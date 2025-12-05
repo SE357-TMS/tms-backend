@@ -18,9 +18,7 @@ import com.example.tms.dto.request.staff.StaffFilterRequest;
 import com.example.tms.dto.request.staff.UpdateStaffRequest;
 import com.example.tms.dto.response.staff.StaffDetailResponse;
 import com.example.tms.dto.response.staff.StaffListResponse;
-import com.example.tms.enity.Cart;
 import com.example.tms.enity.User;
-import com.example.tms.repository.CartRepository;
 import com.example.tms.repository.UserRepository;
 import com.example.tms.service.interface_.StaffService;
 
@@ -31,7 +29,6 @@ import lombok.RequiredArgsConstructor;
 public class StaffServiceImpl implements StaffService {
 
     private final UserRepository userRepository;
-    private final CartRepository cartRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -152,11 +149,6 @@ public class StaffServiceImpl implements StaffService {
         staff.setIsLock(false);
         
         User savedStaff = userRepository.save(staff);
-        
-        Cart cart = new Cart();
-        cart.setUser(savedStaff);
-        cartRepository.save(cart);
-        
         return getStaffById(savedStaff.getId());
     }
 
@@ -202,10 +194,19 @@ public class StaffServiceImpl implements StaffService {
     @Override
     @Transactional
     public void deleteStaff(UUID id) {
-        User staff = userRepository.findById(id)
-            .filter(u -> u.getRole() == User.Role.STAFF)
-            .orElseThrow(() -> new RuntimeException("Staff not found with id: " + id));
-        
-        userRepository.delete(staff);
+        try {
+            User staff = userRepository.findById(id)
+                .filter(u -> u.getRole() == User.Role.STAFF)
+                .orElseThrow(() -> new RuntimeException("Staff not found with id: " + id));
+
+            // Soft delete: set deleted_at timestamp
+            staff.setDeletedAt(System.currentTimeMillis());
+            userRepository.save(staff);
+
+            // Force flush so unique constraints depending on deleted_at are updated immediately
+            userRepository.flush();
+        } catch (org.springframework.orm.ObjectOptimisticLockingFailureException e) {
+            throw new RuntimeException("Staff was updated by another transaction. Please refresh and try again.");
+        }
     }
 }

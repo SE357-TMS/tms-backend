@@ -54,6 +54,18 @@ public class CloudinaryServiceImpl implements CloudinaryService {
         }
     }
 
+    @Override
+    public String getUserImageUrl(UUID userId, int index) {
+        try {
+            String publicId = FOLDER + "/user_" + userId + "_" + index;
+            Map result = cloudinary.api().resource(publicId, ObjectUtils.emptyMap());
+            return result.get("secure_url").toString();
+        } catch (Exception e) {
+            log.warn("User image not found for userId: {} at index: {}", userId, index);
+            return null;
+        }
+    }
+
     /**
      * Generic method to upload image to Cloudinary
      * @param file Image file

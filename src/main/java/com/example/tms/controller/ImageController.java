@@ -1,17 +1,25 @@
 package com.example.tms.controller;
 
+import java.util.UUID;
+
+import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.example.tms.dto.response.ApiResponse;
 import com.example.tms.dto.response.ImageUploadResponse;
 import com.example.tms.repository.UserRepository;
 import com.example.tms.service.interface_.CloudinaryService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/images")
@@ -98,6 +106,32 @@ public class ImageController {
         
         ImageUploadResponse response = new ImageUploadResponse(imageUrl, "Avatar retrieved successfully");
         return ApiResponse.success("Avatar retrieved successfully", response);
+    }
+
+    /**
+     * Get user image URL by index
+     * - PUBLIC: Anyone can view user images
+     */
+    @GetMapping("/users/{userId}/images/{index}")
+    public ApiResponse<ImageUploadResponse> getUserImage(
+            @PathVariable UUID userId,
+            @PathVariable int index) {
+        // Verify user exists
+        userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        
+        if (index < 1 || index > 10) {
+            throw new IllegalArgumentException("Image index must be between 1 and 10");
+        }
+        
+        String imageUrl = cloudinaryService.getUserImageUrl(userId, index);
+        
+        if (imageUrl == null) {
+            return ApiResponse.success("User has no image at index " + index, null);
+        }
+        
+        ImageUploadResponse response = new ImageUploadResponse(imageUrl, "Image retrieved successfully");
+        return ApiResponse.success("Image retrieved successfully", response);
     }
 
     /**

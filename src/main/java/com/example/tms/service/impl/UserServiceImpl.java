@@ -75,6 +75,41 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
+    public UserResponse createAdmin(CreateUserRequest request) {
+        try {
+            if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+                throw new RuntimeException("Username already exists");
+            }
+            if (userRepository.existsByEmail(request.getEmail())) {
+                throw new RuntimeException("Email already exists");
+            }
+
+            User user = new User();
+            user.setUsername(request.getUsername());
+            user.setUserPassword(passwordEncoder.encode(request.getPassword()));
+            user.setFullName(request.getFullName());
+            user.setEmail(request.getEmail());
+            user.setPhoneNumber(request.getPhoneNumber());
+            user.setAddress(request.getAddress());
+            user.setBirthday(request.getBirthday());
+            user.setGender(request.getGender());
+            user.setRole(User.Role.ADMIN); // explicitly ADMIN
+            user.setIsLock(false);
+
+            User saved = userRepository.save(user);
+            return new UserResponse(saved);
+        } catch (DataIntegrityViolationException e) {
+            if (e.getMessage().contains("username")) {
+                throw new RuntimeException("Username already exists (concurrent creation detected)");
+            } else if (e.getMessage().contains("email")) {
+                throw new RuntimeException("Email already exists (concurrent creation detected)");
+            }
+            throw new RuntimeException("Data integrity violation: " + e.getMessage());
+        }
+    }
+
+    @Override
     public UserResponse getUserById(UUID id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));

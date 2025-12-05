@@ -43,4 +43,12 @@ public interface CloudinaryService {
      * @return Image URL or null if not found
      */
     String getUserAvatarUrl(UUID userId);
+    
+    /**
+     * Get user image URL by index (if exists)
+     * @param userId User ID
+     * @param index Image index
+     * @return Image URL or null if not found
+     */
+    String getUserImageUrl(UUID userId, int index);
 }

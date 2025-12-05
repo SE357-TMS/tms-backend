@@ -58,6 +58,22 @@ public class UserController {
     }
 
     @Operation(
+        summary = "Create admin user (ADMIN only)",
+        description = "Create a new user with ADMIN role. Only callable by ADMIN accounts."
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Admin user created successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - only ADMIN can call")
+    })
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @PostMapping("/admin")
+    public ResponseEntity<ApiResponse<UserResponse>> createAdminUser(@Valid @RequestBody CreateUserRequest request) {
+        UserResponse response = userService.createAdmin(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Admin user created successfully", response));
+    }
+
+    @Operation(
         summary = "Get user by ID",
         description = "Retrieve user details by their unique identifier"
     )
