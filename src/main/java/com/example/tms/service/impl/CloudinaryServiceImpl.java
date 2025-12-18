@@ -1,6 +1,8 @@
 package com.example.tms.service.impl;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -20,32 +22,33 @@ import lombok.extern.slf4j.Slf4j;
 public class CloudinaryServiceImpl implements CloudinaryService {
 
     private final Cloudinary cloudinary;
-    private static final String FOLDER = "tms/users"; // Folder in Cloudinary
+    private static final String USER_FOLDER = "tms/users"; // Folder for user images
+    private static final String ROUTE_FOLDER = "tms/routes"; // Folder for route images
 
     @Override
     public String uploadUserAvatar(MultipartFile file, UUID userId) {
-        return uploadImage(file, "user_" + userId);
+        return uploadImage(file, "user_" + userId, USER_FOLDER);
     }
 
     @Override
     public String uploadUserImage(MultipartFile file, UUID userId, int index) {
-        return uploadImage(file, "user_" + userId + "_" + index);
+        return uploadImage(file, "user_" + userId + "_" + index, USER_FOLDER);
     }
 
     @Override
     public void deleteUserAvatar(UUID userId) {
-        deleteImage("user_" + userId);
+        deleteImage("user_" + userId, USER_FOLDER);
     }
 
     @Override
     public void deleteUserImage(UUID userId, int index) {
-        deleteImage("user_" + userId + "_" + index);
+        deleteImage("user_" + userId + "_" + index, USER_FOLDER);
     }
 
     @Override
     public String getUserAvatarUrl(UUID userId) {
         try {
-            String publicId = FOLDER + "/user_" + userId;
+            String publicId = USER_FOLDER + "/user_" + userId;
             Map result = cloudinary.api().resource(publicId, ObjectUtils.emptyMap());
             return result.get("secure_url").toString();
         } catch (Exception e) {
@@ -57,7 +60,7 @@ public class CloudinaryServiceImpl implements CloudinaryService {
     @Override
     public String getUserImageUrl(UUID userId, int index) {
         try {
-            String publicId = FOLDER + "/user_" + userId + "_" + index;
+            String publicId = USER_FOLDER + "/user_" + userId + "_" + index;
             Map result = cloudinary.api().resource(publicId, ObjectUtils.emptyMap());
             return result.get("secure_url").toString();
         } catch (Exception e) {
@@ -65,19 +68,54 @@ public class CloudinaryServiceImpl implements CloudinaryService {
             return null;
         }
     }
+    
+    @Override
+    public String uploadRouteImage(MultipartFile file, UUID routeId, int index) {
+        return uploadImage(file, "route_" + routeId + "_" + index, ROUTE_FOLDER);
+    }
+    
+    @Override
+    public void deleteRouteImage(UUID routeId, int index) {
+        deleteImage("route_" + routeId + "_" + index, ROUTE_FOLDER);
+    }
+    
+    @Override
+    public String getRouteImageUrl(UUID routeId, int index) {
+        try {
+            String publicId = ROUTE_FOLDER + "/route_" + routeId + "_" + index;
+            Map result = cloudinary.api().resource(publicId, ObjectUtils.emptyMap());
+            return result.get("secure_url").toString();
+        } catch (Exception e) {
+            log.debug("Route image not found for routeId: {} at index: {}", routeId, index);
+            return null;
+        }
+    }
+    
+    @Override
+    public List<String> getRouteImages(UUID routeId) {
+        List<String> images = new ArrayList<>();
+        for (int i = 1; i <= 10; i++) {
+            String url = getRouteImageUrl(routeId, i);
+            if (url != null) {
+                images.add(url);
+            }
+        }
+        return images;
+    }
 
     /**
      * Generic method to upload image to Cloudinary
      * @param file Image file
      * @param publicId Public ID (filename without extension)
+     * @param folder Folder path in Cloudinary
      * @return Secure URL of uploaded image
      */
-    private String uploadImage(MultipartFile file, String publicId) {
+    private String uploadImage(MultipartFile file, String publicId, String folder) {
         validateFile(file);
         
         try {
             Map<String, Object> uploadParams = ObjectUtils.asMap(
-                "folder", FOLDER,
+                "folder", folder,
                 "public_id", publicId,
                 "overwrite", true, // Overwrite if exists
                 "resource_type", "image"
@@ -98,10 +136,11 @@ public class CloudinaryServiceImpl implements CloudinaryService {
     /**
      * Generic method to delete image from Cloudinary
      * @param publicId Public ID (filename without extension)
+     * @param folder Folder path in Cloudinary
      */
-    private void deleteImage(String publicId) {
+    private void deleteImage(String publicId, String folder) {
         try {
-            String fullPublicId = FOLDER + "/" + publicId;
+            String fullPublicId = folder + "/" + publicId;
             Map result = cloudinary.uploader().destroy(fullPublicId, ObjectUtils.emptyMap());
             
             if ("ok".equals(result.get("result"))) {

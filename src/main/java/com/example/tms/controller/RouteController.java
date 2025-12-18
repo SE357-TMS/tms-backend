@@ -21,6 +21,7 @@ import com.example.tms.dto.request.route.RouteFilterRequest;
 import com.example.tms.dto.request.route.UpdateRouteRequest;
 import com.example.tms.dto.response.ApiResponse;
 import com.example.tms.dto.response.PaginationResponse;
+import com.example.tms.dto.response.route.RouteDetailResponse;
 import com.example.tms.dto.response.route.RouteResponse;
 import com.example.tms.service.interface_.RouteService;
 
@@ -64,6 +65,18 @@ public class RouteController {
             @Parameter(description = "Route ID") @PathVariable UUID id) {
         RouteResponse response = routeService.getById(id);
         return ResponseEntity.ok(ApiResponse.success("Route retrieved successfully", response));
+    }
+    
+    @Operation(summary = "Get route detail by ID", description = "Retrieve full route details including itinerary and images")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Route detail retrieved successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Route not found")
+    })
+    @GetMapping("/{id}/detail")
+    public ResponseEntity<ApiResponse<RouteDetailResponse>> getDetailById(
+            @Parameter(description = "Route ID") @PathVariable UUID id) {
+        RouteDetailResponse response = routeService.getDetailById(id);
+        return ResponseEntity.ok(ApiResponse.success("Route detail retrieved successfully", response));
     }
 
     @Operation(summary = "Get all routes", description = "Retrieve a paginated list of routes with optional filters")

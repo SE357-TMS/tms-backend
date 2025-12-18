@@ -21,6 +21,7 @@ import com.example.tms.dto.request.trip.TripFilterRequest;
 import com.example.tms.dto.request.trip.UpdateTripRequest;
 import com.example.tms.dto.response.ApiResponse;
 import com.example.tms.dto.response.PaginationResponse;
+import com.example.tms.dto.response.trip.TripAvailableDatesResponse;
 import com.example.tms.dto.response.trip.TripResponse;
 import com.example.tms.service.interface_.TripService;
 
@@ -111,5 +112,27 @@ public class TripController {
             @Parameter(description = "Trip ID") @PathVariable UUID id) {
         tripService.delete(id);
         return ResponseEntity.ok(ApiResponse.success("Trip deleted successfully"));
+    }
+    
+    @Operation(summary = "Get available trips by route", description = "Get all available trips for a route (departure date >= today + 3 days)")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Available trips retrieved successfully")
+    })
+    @GetMapping("/route/{routeId}/available")
+    public ResponseEntity<ApiResponse<List<TripAvailableDatesResponse>>> getAvailableTripsByRoute(
+            @Parameter(description = "Route ID") @PathVariable UUID routeId) {
+        List<TripAvailableDatesResponse> response = tripService.getAvailableTripsByRouteId(routeId);
+        return ResponseEntity.ok(ApiResponse.success("Available trips retrieved successfully", response));
+    }
+    
+    @Operation(summary = "Get nearest available trip", description = "Get the nearest available trip for a route")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Nearest trip retrieved successfully")
+    })
+    @GetMapping("/route/{routeId}/nearest")
+    public ResponseEntity<ApiResponse<TripAvailableDatesResponse>> getNearestAvailableTrip(
+            @Parameter(description = "Route ID") @PathVariable UUID routeId) {
+        TripAvailableDatesResponse response = tripService.getNearestAvailableTrip(routeId);
+        return ResponseEntity.ok(ApiResponse.success("Nearest trip retrieved successfully", response));
     }
 }

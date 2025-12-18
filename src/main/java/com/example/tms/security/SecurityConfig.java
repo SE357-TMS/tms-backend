@@ -37,6 +37,16 @@ public class SecurityConfig {
                     .requestMatchers("/auth/**").permitAll()
                     .requestMatchers("/api/v1/images/users/*/avatar").permitAll() // Public access to view avatars
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll() // Swagger UI
+                    // Customer public APIs (no auth required for viewing)
+                    .requestMatchers("/api/v1/customer/tours/suggestions").permitAll()
+                    .requestMatchers("/api/v1/customer/tours/home").permitAll()
+                    .requestMatchers("/api/v1/customer/tours/search").permitAll()
+                    .requestMatchers("/api/v1/customer/tours/start-locations").permitAll()
+                    .requestMatchers("/api/v1/customer/tours/*/favorite").permitAll() // GET is public, POST requires auth in controller
+                    .requestMatchers("/api/v1/routes/*/detail").permitAll() // Route detail page
+                    .requestMatchers("/api/v1/routes/*").permitAll() // Route info
+                    .requestMatchers("/api/v1/trips/route/*/available").permitAll() // Available trips
+                    .requestMatchers("/api/v1/trips/route/*/nearest").permitAll() // Nearest trip
                     .requestMatchers("/admin/**").hasAuthority("ADMIN")
                     .requestMatchers("/staff/**").hasAuthority("STAFF")
                     .requestMatchers("/customer/**").hasAuthority("CUSTOMER")

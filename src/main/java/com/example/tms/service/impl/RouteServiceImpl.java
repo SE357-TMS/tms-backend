@@ -1,6 +1,8 @@
 package com.example.tms.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -16,9 +18,13 @@ import com.example.tms.dto.request.route.CreateRouteRequest;
 import com.example.tms.dto.request.route.RouteFilterRequest;
 import com.example.tms.dto.request.route.UpdateRouteRequest;
 import com.example.tms.dto.response.PaginationResponse;
+import com.example.tms.dto.response.route.RouteDetailResponse;
 import com.example.tms.dto.response.route.RouteResponse;
 import com.example.tms.enity.Route;
+import com.example.tms.enity.RouteAttraction;
+import com.example.tms.repository.RouteAttractionRepository;
 import com.example.tms.repository.RouteRepository;
+import com.example.tms.service.interface_.CloudinaryService;
 import com.example.tms.service.interface_.RouteService;
 
 import lombok.RequiredArgsConstructor;
@@ -28,6 +34,8 @@ import lombok.RequiredArgsConstructor;
 public class RouteServiceImpl implements RouteService {
 
     private final RouteRepository routeRepository;
+    private final RouteAttractionRepository routeAttractionRepository;
+    private final CloudinaryService cloudinaryService;
 
     @Override
     @Transactional
@@ -51,6 +59,57 @@ public class RouteServiceImpl implements RouteService {
                 .filter(r -> r.getDeletedAt() == 0)
                 .orElseThrow(() -> new RuntimeException("Route not found"));
         return new RouteResponse(route);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public RouteDetailResponse getDetailById(UUID id) {
+        Route route = routeRepository.findById(id)
+                .filter(r -> r.getDeletedAt() == 0)
+                .orElseThrow(() -> new RuntimeException("Route not found"));
+        
+        RouteDetailResponse response = new RouteDetailResponse(route);
+        
+        // Get images from Cloudinary
+        List<String> images = cloudinaryService.getRouteImages(id);
+        response.setImages(images);
+        
+        // Get itinerary (route attractions grouped by day)
+        List<RouteAttraction> attractions = routeAttractionRepository.findByRouteIdOrderByDayAndOrder(id);
+        
+        // Group by day
+        Map<Integer, List<RouteAttraction>> groupedByDay = attractions.stream()
+                .collect(Collectors.groupingBy(RouteAttraction::getDay));
+        
+        List<RouteDetailResponse.ItineraryDay> itinerary = new ArrayList<>();
+        for (int day = 1; day <= (route.getDurationDays() != null ? route.getDurationDays() : 0); day++) {
+            RouteDetailResponse.ItineraryDay itineraryDay = new RouteDetailResponse.ItineraryDay();
+            itineraryDay.setDay(day);
+            
+            List<RouteAttraction> dayAttractions = groupedByDay.getOrDefault(day, new ArrayList<>());
+            List<RouteDetailResponse.ItineraryAttraction> attractionList = dayAttractions.stream()
+                    .map(ra -> {
+                        RouteDetailResponse.ItineraryAttraction ia = new RouteDetailResponse.ItineraryAttraction();
+                        ia.setAttractionId(ra.getAttraction().getId());
+                        ia.setAttractionName(ra.getAttraction().getName());
+                        ia.setLocation(ra.getAttraction().getLocation());
+                        if (ra.getAttraction().getCategory() != null) {
+                            ia.setCategoryName(ra.getAttraction().getCategory().getName());
+                        }
+                        ia.setOrderInDay(ra.getOrderInDay());
+                        ia.setActivityDescription(ra.getActivityDescription());
+                        return ia;
+                    })
+                    .sorted((a, b) -> a.getOrderInDay().compareTo(b.getOrderInDay()))
+                    .collect(Collectors.toList());
+            
+            itineraryDay.setAttractions(attractionList);
+            itinerary.add(itineraryDay);
+        }
+        
+        response.setItinerary(itinerary);
+        
+        return response;
     }
 
     @Override

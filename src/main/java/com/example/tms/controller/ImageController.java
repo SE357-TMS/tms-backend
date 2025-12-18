@@ -182,6 +182,83 @@ public class ImageController {
         cloudinaryService.deleteUserImage(userId, index);
         return ApiResponse.success("Image " + index + " deleted successfully");
     }
+    
+    // ========== ROUTE IMAGE ENDPOINTS ==========
+    
+    /**
+     * Upload route image with index
+     * - ADMIN/STAFF only
+     */
+    @PostMapping(value = "/routes/{routeId}/images/{index}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyAuthority('STAFF', 'ADMIN')")
+    public ApiResponse<ImageUploadResponse> uploadRouteImage(
+            @PathVariable UUID routeId,
+            @PathVariable int index,
+            @RequestParam("file") MultipartFile file) {
+        
+        if (index < 1 || index > 10) {
+            throw new IllegalArgumentException("Image index must be between 1 and 10");
+        }
+        
+        String imageUrl = cloudinaryService.uploadRouteImage(file, routeId, index);
+        ImageUploadResponse response = new ImageUploadResponse(
+                imageUrl, 
+                "Route image " + index + " uploaded successfully"
+        );
+        
+        return ApiResponse.success("Image uploaded successfully", response);
+    }
+    
+    /**
+     * Get route image URL by index
+     * - PUBLIC: Anyone can view route images
+     */
+    @GetMapping("/routes/{routeId}/images/{index}")
+    public ApiResponse<ImageUploadResponse> getRouteImage(
+            @PathVariable UUID routeId,
+            @PathVariable int index) {
+        
+        if (index < 1 || index > 10) {
+            throw new IllegalArgumentException("Image index must be between 1 and 10");
+        }
+        
+        String imageUrl = cloudinaryService.getRouteImageUrl(routeId, index);
+        
+        if (imageUrl == null) {
+            return ApiResponse.success("Route has no image at index " + index, null);
+        }
+        
+        ImageUploadResponse response = new ImageUploadResponse(imageUrl, "Image retrieved successfully");
+        return ApiResponse.success("Image retrieved successfully", response);
+    }
+    
+    /**
+     * Get all route images
+     * - PUBLIC: Anyone can view route images
+     */
+    @GetMapping("/routes/{routeId}/images")
+    public ApiResponse<java.util.List<String>> getRouteImages(@PathVariable UUID routeId) {
+        java.util.List<String> images = cloudinaryService.getRouteImages(routeId);
+        return ApiResponse.success("Route images retrieved successfully", images);
+    }
+    
+    /**
+     * Delete route image by index
+     * - ADMIN/STAFF only
+     */
+    @DeleteMapping("/routes/{routeId}/images/{index}")
+    @PreAuthorize("hasAnyAuthority('STAFF', 'ADMIN')")
+    public ApiResponse<String> deleteRouteImage(
+            @PathVariable UUID routeId,
+            @PathVariable int index) {
+        
+        if (index < 1 || index > 10) {
+            throw new IllegalArgumentException("Image index must be between 1 and 10");
+        }
+        
+        cloudinaryService.deleteRouteImage(routeId, index);
+        return ApiResponse.success("Route image " + index + " deleted successfully");
+    }
 
     /**
      * Check if user has permission to modify images
