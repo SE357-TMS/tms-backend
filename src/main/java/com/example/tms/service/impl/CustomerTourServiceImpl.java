@@ -1,14 +1,16 @@
 package com.example.tms.service.impl;
 
-import com.example.tms.dto.request.customer.TourSearchRequest;
-import com.example.tms.dto.response.PaginationResponse;
-import com.example.tms.dto.response.customer.HomePageDataResponse;
-import com.example.tms.dto.response.customer.SearchSuggestionResponse;
-import com.example.tms.dto.response.customer.TourCardResponse;
-import com.example.tms.enity.*;
-import com.example.tms.repository.*;
-import com.example.tms.service.interface_.CustomerTourService;
-import lombok.RequiredArgsConstructor;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -16,10 +18,28 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.*;
-import java.util.stream.Collectors;
+import com.example.tms.dto.request.customer.TourSearchRequest;
+import com.example.tms.dto.response.PaginationResponse;
+import com.example.tms.dto.response.customer.FavoriteDestinationImageResponse;
+import com.example.tms.dto.response.customer.HomePageDataResponse;
+import com.example.tms.dto.response.customer.SearchSuggestionResponse;
+import com.example.tms.dto.response.customer.TourCardResponse;
+import com.example.tms.enity.Attraction;
+import com.example.tms.enity.FavoriteTour;
+import com.example.tms.enity.Route;
+import com.example.tms.enity.RouteAttraction;
+import com.example.tms.enity.Trip;
+import com.example.tms.enity.User;
+import com.example.tms.repository.AttractionRepository;
+import com.example.tms.repository.FavoriteTourRepository;
+import com.example.tms.repository.RouteAttractionRepository;
+import com.example.tms.repository.RouteRepository;
+import com.example.tms.repository.TripRepository;
+import com.example.tms.repository.UserRepository;
+import com.example.tms.service.interface_.CloudinaryService;
+import com.example.tms.service.interface_.CustomerTourService;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -27,9 +47,11 @@ public class CustomerTourServiceImpl implements CustomerTourService {
 
     private final RouteRepository routeRepository;
     private final AttractionRepository attractionRepository;
+    private final RouteAttractionRepository routeAttractionRepository;
     private final TripRepository tripRepository;
     private final FavoriteTourRepository favoriteTourRepository;
     private final UserRepository userRepository;
+    private final CloudinaryService cloudinaryService;
 
     @Override
     public SearchSuggestionResponse getSearchSuggestions(String keyword, int limit) {
@@ -77,20 +99,72 @@ public class CustomerTourServiceImpl implements CustomerTourService {
         // Get most favorited tours
         Pageable tourPageable = PageRequest.of(0, tourLimit);
         List<Object[]> favoritedRoutesData = routeRepository.findMostFavoritedRoutes(tourPageable);
-        
+        List<UUID> favoriteRouteIds = favoritedRoutesData.stream()
+                .map(row -> ((Route) row[0]).getId())
+                .collect(Collectors.toList());
+
+        final Map<UUID, List<UUID>> favoriteRouteAttractionMap = new HashMap<>();
+        if (!favoriteRouteIds.isEmpty()) {
+            List<RouteAttraction> favoriteRouteAttractions = routeAttractionRepository.findByRouteIdIn(favoriteRouteIds);
+            Map<UUID, List<UUID>> temp = favoriteRouteAttractions.stream()
+                    .collect(Collectors.groupingBy(
+                        ra -> ra.getRoute().getId(),
+                        Collectors.mapping(ra -> ra.getAttraction().getId(), Collectors.toList())
+                    ));
+            favoriteRouteAttractionMap.putAll(temp);
+        }
+
         List<TourCardResponse> favoriteTours = favoritedRoutesData.stream()
                 .map(row -> {
                     Route route = (Route) row[0];
                     Long favCount = (Long) row[1];
-                    return buildTourCard(route, favCount, userId);
+                    List<UUID> attractionIds = favoriteRouteAttractionMap.getOrDefault(route.getId(), Collections.emptyList());
+                    return buildTourCard(route, favCount, userId, attractionIds);
                 })
                 .collect(Collectors.toList());
 
         // Get favorite destinations (attractions from most favorited routes)
+        List<Object[]> attractionsData = loadFavoriteDestinations(destinationLimit);
+        List<HomePageDataResponse.FavoriteDestination> favoriteDestinations = buildFavoriteDestinations(attractionsData);
+
+        return HomePageDataResponse.builder()
+                .favoriteTours(favoriteTours)
+                .favoriteDestinations(favoriteDestinations)
+                .build();
+    }
+
+    @Override
+    public List<FavoriteDestinationImageResponse> getFavoriteDestinationImages(int destinationLimit) {
+        List<Object[]> attractionsData = loadFavoriteDestinations(destinationLimit);
+        List<CompletableFuture<FavoriteDestinationImageResponse>> imageFutures = attractionsData.stream()
+                .map(row -> {
+                    Attraction attraction = (Attraction) row[0];
+                    return CompletableFuture.supplyAsync(() -> {
+                        String imageUrl = null;
+                        try {
+                            imageUrl = cloudinaryService.getAttractionImageUrl(attraction.getId(), 1);
+                        } catch (Exception ignored) {
+                        }
+                        return FavoriteDestinationImageResponse.builder()
+                                .attractionId(attraction.getId())
+                                .image(imageUrl)
+                                .build();
+                    });
+                })
+                .collect(Collectors.toList());
+
+        return imageFutures.stream()
+                .map(CompletableFuture::join)
+                .collect(Collectors.toList());
+    }
+
+    private List<Object[]> loadFavoriteDestinations(int destinationLimit) {
         Pageable destPageable = PageRequest.of(0, destinationLimit);
-        List<Object[]> attractionsData = attractionRepository.findFavoriteDestinations(destPageable);
-        
-        List<HomePageDataResponse.FavoriteDestination> favoriteDestinations = attractionsData.stream()
+        return attractionRepository.findFavoriteDestinations(destPageable);
+    }
+
+    private List<HomePageDataResponse.FavoriteDestination> buildFavoriteDestinations(List<Object[]> attractionsData) {
+        return attractionsData.stream()
                 .map(row -> {
                     Attraction attraction = (Attraction) row[0];
                     Long tourCount = (Long) row[1];
@@ -98,16 +172,12 @@ public class CustomerTourServiceImpl implements CustomerTourService {
                             .attractionId(attraction.getId())
                             .name(attraction.getName())
                             .location(attraction.getLocation())
-                            .image(attraction.getDescription()) // Using description as image placeholder
+                            .description(attraction.getDescription())
                             .tourCount(tourCount)
+                            .image(null)
                             .build();
                 })
                 .collect(Collectors.toList());
-
-        return HomePageDataResponse.builder()
-                .favoriteTours(favoriteTours)
-                .favoriteDestinations(favoriteDestinations)
-                .build();
     }
 
     @Override
@@ -129,22 +199,32 @@ public class CustomerTourServiceImpl implements CustomerTourService {
                 ), pageable);
         }
 
+        List<UUID> routeIds = routePage.getContent().stream()
+                .map(Route::getId)
+                .collect(Collectors.toList());
+
+        final Map<UUID, List<UUID>> attractionMap = new HashMap<>();
+        if (!routeIds.isEmpty()) {
+            List<RouteAttraction> routeAttractions = routeAttractionRepository.findByRouteIdIn(routeIds);
+            Map<UUID, List<UUID>> temp = routeAttractions.stream()
+                    .collect(Collectors.groupingBy(
+                        ra -> ra.getRoute().getId(),
+                        Collectors.mapping(ra -> ra.getAttraction().getId(), Collectors.toList())
+                    ));
+            attractionMap.putAll(temp);
+        }
+
         // Filter by additional criteria in memory (for complex filters)
         List<TourCardResponse> tourCards = routePage.getContent().stream()
                 .map(route -> {
                     Long favCount = favoriteTourRepository.countByRouteId(route.getId());
-                    return buildTourCard(route, favCount, userId);
+                    List<UUID> attractionIds = attractionMap.getOrDefault(route.getId(), Collections.emptyList());
+                    return buildTourCard(route, favCount, userId, attractionIds);
                 })
                 .filter(card -> filterTourCard(card, request))
                 .collect(Collectors.toList());
 
-        return PaginationResponse.<TourCardResponse>builder()
-                .content(tourCards)
-                .totalElements(routePage.getTotalElements())
-                .totalPages(routePage.getTotalPages())
-                .currentPage(routePage.getNumber())
-                .pageSize(routePage.getSize())
-                .build();
+        return new PaginationResponse<>(routePage, tourCards);
     }
 
     @Override
@@ -185,7 +265,7 @@ public class CustomerTourServiceImpl implements CustomerTourService {
     }
 
     // Helper methods
-    private TourCardResponse buildTourCard(Route route, Long favCount, UUID userId) {
+    private TourCardResponse buildTourCard(Route route, Long favCount, UUID userId, List<UUID> attractionIds) {
         // Get upcoming trips for this route
         LocalDate today = LocalDate.now();
         List<Trip> upcomingTrips = tripRepository.findAvailableTripsByRouteId(route.getId(), today);
@@ -211,7 +291,7 @@ public class CustomerTourServiceImpl implements CustomerTourService {
         boolean isFav = userId != null && favoriteTourRepository.existsByUserIdAndRouteId(userId, route.getId());
 
         // Generate route code from first letters
-        String routeCode = generateRouteCode(route);
+        String routeCode = generateRouteCodeFromId(route.getId());
 
         return TourCardResponse.builder()
                 .routeId(route.getId())
@@ -225,19 +305,14 @@ public class CustomerTourServiceImpl implements CustomerTourService {
                 .favoriteCount(favCount != null ? favCount : 0L)
                 .isFavorited(isFav)
                 .upcomingTrips(tripInfos)
+                .attractionIds(attractionIds)
                 .build();
     }
 
-    private String generateRouteCode(Route route) {
-        if (route.getRouteName() == null) return "";
-        String[] parts = route.getRouteName().split("\\s*-\\s*");
-        StringBuilder code = new StringBuilder();
-        for (String part : parts) {
-            if (!part.isEmpty()) {
-                code.append(part.charAt(0));
-            }
-        }
-        return code.toString().toUpperCase();
+    private String generateRouteCodeFromId(UUID routeId) {
+        if (routeId == null) return "";
+        String raw = routeId.toString().replace("-", "").toUpperCase();
+        return raw.substring(0, Math.min(8, raw.length()));
     }
 
     private Sort buildSort(String sortBy, String sortOrder) {
@@ -255,6 +330,17 @@ public class CustomerTourServiceImpl implements CustomerTourService {
     }
 
     private boolean filterTourCard(TourCardResponse card, TourSearchRequest request) {
+        if (request.getAttractionId() != null) {
+            List<UUID> attractionIds = card.getAttractionIds();
+            boolean matchesRouteName = request.getKeyword() != null && !request.getKeyword().trim().isEmpty()
+                    && card.getRouteName() != null
+                    && card.getRouteName().toLowerCase().contains(request.getKeyword().trim().toLowerCase());
+            if ((attractionIds == null || !attractionIds.contains(request.getAttractionId()))
+                    && !matchesRouteName) {
+                return false;
+            }
+        }
+
         // Filter by start location
         if (request.getStartLocation() != null && !request.getStartLocation().isEmpty()) {
             if (!card.getStartLocation().toLowerCase().contains(request.getStartLocation().toLowerCase())) {

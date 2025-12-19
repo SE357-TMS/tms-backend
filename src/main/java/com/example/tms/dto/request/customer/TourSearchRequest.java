@@ -2,6 +2,7 @@ package com.example.tms.dto.request.customer;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.UUID;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,4 +23,5 @@ public class TourSearchRequest {
     private String sortOrder = "desc"; // asc, desc
     private Integer page = 0;
     private Integer size = 10;
+    private UUID attractionId;
 }

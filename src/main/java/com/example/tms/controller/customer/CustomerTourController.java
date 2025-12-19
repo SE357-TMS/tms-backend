@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.tms.dto.request.customer.TourSearchRequest;
 import com.example.tms.dto.response.ApiResponse;
 import com.example.tms.dto.response.PaginationResponse;
+import com.example.tms.dto.response.customer.FavoriteDestinationImageResponse;
 import com.example.tms.dto.response.customer.HomePageDataResponse;
 import com.example.tms.dto.response.customer.SearchSuggestionResponse;
 import com.example.tms.dto.response.customer.TourCardResponse;
@@ -52,6 +53,14 @@ public class CustomerTourController {
         UUID userId = getCurrentUserId();
         HomePageDataResponse response = customerTourService.getHomePageData(userId, tourLimit, destinationLimit);
         return ResponseEntity.ok(ApiResponse.success("Home page data retrieved successfully", response));
+    }
+
+    @Operation(summary = "Get favorite destination images", description = "Retrieve destination images separately to avoid blocking home data")
+    @GetMapping("/home/destination-images")
+    public ResponseEntity<ApiResponse<List<FavoriteDestinationImageResponse>>> getFavoriteDestinationImages(
+            @Parameter(description = "Number of destinations to show") @RequestParam(defaultValue = "5") int destinationLimit) {
+        List<FavoriteDestinationImageResponse> response = customerTourService.getFavoriteDestinationImages(destinationLimit);
+        return ResponseEntity.ok(ApiResponse.success("Destination images retrieved successfully", response));
     }
 
     @Operation(summary = "Search tours", description = "Search and filter tours with pagination")

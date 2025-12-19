@@ -21,5 +21,8 @@ public interface RouteAttractionRepository extends JpaRepository<RouteAttraction
     
     @Query("SELECT ra FROM RouteAttraction ra WHERE ra.route.id = :routeId AND ra.deletedAt = 0")
     List<RouteAttraction> findByRouteId(@Param("routeId") UUID routeId);
+
+    @Query("SELECT ra FROM RouteAttraction ra WHERE ra.route.id IN :routeIds AND ra.deletedAt = 0")
+    List<RouteAttraction> findByRouteIdIn(@Param("routeIds") List<UUID> routeIds);
 }
 

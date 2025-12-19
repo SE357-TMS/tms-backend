@@ -25,6 +25,7 @@ public class HomePageDataResponse {
         private String name;
         private String location;
         private String image;
+        private String description;
         private Long tourCount;
     }
 }

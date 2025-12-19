@@ -10,6 +10,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -24,8 +26,10 @@ public class TourCardResponse {
     private String image;
     private BigDecimal minPrice;
     private Long favoriteCount;
+    @JsonProperty("favorited")
     private boolean isFavorited;
     private List<TripInfo> upcomingTrips;
+    private List<UUID> attractionIds;
     
     @Data
     @Builder
@@ -33,6 +37,7 @@ public class TourCardResponse {
     @AllArgsConstructor
     public static class TripInfo {
         private UUID tripId;
+        @JsonProperty("startDate")
         private LocalDate departureDate;
         private LocalDate returnDate;
         private BigDecimal price;

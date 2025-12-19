@@ -186,6 +186,25 @@ public class ImageController {
     // ========== ROUTE IMAGE ENDPOINTS ==========
     
     /**
+     * Upload main route image (updates Route entity's image field)
+     * - ADMIN/STAFF only
+     */
+    @PostMapping(value = "/routes/{routeId}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyAuthority('STAFF', 'ADMIN')")
+    public ApiResponse<ImageUploadResponse> uploadRouteMainImage(
+            @PathVariable UUID routeId,
+            @RequestParam("file") MultipartFile file) {
+        
+        String imageUrl = cloudinaryService.uploadRouteMainImage(file, routeId);
+        ImageUploadResponse response = new ImageUploadResponse(
+                imageUrl, 
+                "Route main image uploaded and updated successfully"
+        );
+        
+        return ApiResponse.success("Route image uploaded successfully", response);
+    }
+    
+    /**
      * Upload route image with index
      * - ADMIN/STAFF only
      */
@@ -258,6 +277,102 @@ public class ImageController {
         
         cloudinaryService.deleteRouteImage(routeId, index);
         return ApiResponse.success("Route image " + index + " deleted successfully");
+    }
+
+    // ========== ATTRACTION IMAGE ENDPOINTS ==========
+    
+    /**
+     * Upload main attraction image (uploads to Cloudinary, does NOT update database)
+     * - ADMIN/STAFF only
+     */
+    @PostMapping(value = "/attractions/{attractionId}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyAuthority('STAFF', 'ADMIN')")
+    public ApiResponse<ImageUploadResponse> uploadAttractionMainImage(
+            @PathVariable UUID attractionId,
+            @RequestParam("file") MultipartFile file) {
+        
+        String imageUrl = cloudinaryService.uploadAttractionMainImage(file, attractionId);
+        ImageUploadResponse response = new ImageUploadResponse(
+                imageUrl, 
+                "Attraction main image uploaded successfully"
+        );
+        
+        return ApiResponse.success("Attraction image uploaded successfully", response);
+    }
+    
+    /**
+     * Upload attraction image with index
+     * - ADMIN/STAFF only
+     */
+    @PostMapping(value = "/attractions/{attractionId}/images/{index}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyAuthority('STAFF', 'ADMIN')")
+    public ApiResponse<ImageUploadResponse> uploadAttractionImage(
+            @PathVariable UUID attractionId,
+            @PathVariable int index,
+            @RequestParam("file") MultipartFile file) {
+        
+        if (index < 1 || index > 10) {
+            throw new IllegalArgumentException("Image index must be between 1 and 10");
+        }
+        
+        String imageUrl = cloudinaryService.uploadAttractionImage(file, attractionId, index);
+        ImageUploadResponse response = new ImageUploadResponse(
+                imageUrl, 
+                "Attraction image " + index + " uploaded successfully"
+        );
+        
+        return ApiResponse.success("Image uploaded successfully", response);
+    }
+    
+    /**
+     * Get attraction image URL by index
+     * - PUBLIC: Anyone can view attraction images
+     */
+    @GetMapping("/attractions/{attractionId}/images/{index}")
+    public ApiResponse<ImageUploadResponse> getAttractionImage(
+            @PathVariable UUID attractionId,
+            @PathVariable int index) {
+        
+        if (index < 1 || index > 10) {
+            throw new IllegalArgumentException("Image index must be between 1 and 10");
+        }
+        
+        String imageUrl = cloudinaryService.getAttractionImageUrl(attractionId, index);
+        
+        if (imageUrl == null) {
+            return ApiResponse.success("Attraction has no image at index " + index, null);
+        }
+        
+        ImageUploadResponse response = new ImageUploadResponse(imageUrl, "Image retrieved successfully");
+        return ApiResponse.success("Image retrieved successfully", response);
+    }
+    
+    /**
+     * Get all attraction images
+     * - PUBLIC: Anyone can view attraction images
+     */
+    @GetMapping("/attractions/{attractionId}/images")
+    public ApiResponse<java.util.List<String>> getAttractionImages(@PathVariable UUID attractionId) {
+        java.util.List<String> images = cloudinaryService.getAttractionImages(attractionId);
+        return ApiResponse.success("Attraction images retrieved successfully", images);
+    }
+    
+    /**
+     * Delete attraction image by index
+     * - ADMIN/STAFF only
+     */
+    @DeleteMapping("/attractions/{attractionId}/images/{index}")
+    @PreAuthorize("hasAnyAuthority('STAFF', 'ADMIN')")
+    public ApiResponse<String> deleteAttractionImage(
+            @PathVariable UUID attractionId,
+            @PathVariable int index) {
+        
+        if (index < 1 || index > 10) {
+            throw new IllegalArgumentException("Image index must be between 1 and 10");
+        }
+        
+        cloudinaryService.deleteAttractionImage(attractionId, index);
+        return ApiResponse.success("Attraction image " + index + " deleted successfully");
     }
 
     /**

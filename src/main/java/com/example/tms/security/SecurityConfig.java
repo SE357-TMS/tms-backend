@@ -40,6 +40,7 @@ public class SecurityConfig {
                     // Customer public APIs (no auth required for viewing)
                     .requestMatchers("/api/v1/customer/tours/suggestions").permitAll()
                     .requestMatchers("/api/v1/customer/tours/home").permitAll()
+                    .requestMatchers("/api/v1/customer/tours/home/destination-images").permitAll()
                     .requestMatchers("/api/v1/customer/tours/search").permitAll()
                     .requestMatchers("/api/v1/customer/tours/start-locations").permitAll()
                     .requestMatchers("/api/v1/customer/tours/*/favorite").permitAll() // GET is public, POST requires auth in controller
@@ -47,6 +48,7 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/routes/*").permitAll() // Route info
                     .requestMatchers("/api/v1/trips/route/*/available").permitAll() // Available trips
                     .requestMatchers("/api/v1/trips/route/*/nearest").permitAll() // Nearest trip
+                    .requestMatchers("/api/v1/images/routes/*/images").permitAll() // Route gallery
                     .requestMatchers("/admin/**").hasAuthority("ADMIN")
                     .requestMatchers("/staff/**").hasAuthority("STAFF")
                     .requestMatchers("/customer/**").hasAuthority("CUSTOMER")
