@@ -6,8 +6,8 @@ import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.tms.enity.PasswordResetToken;
-import com.example.tms.enity.User;
+import com.example.tms.entity.PasswordResetToken;
+import com.example.tms.entity.User;
 
 public interface PasswordResetTokenRepository extends JpaRepository<PasswordResetToken, UUID> {
     
@@ -19,3 +19,4 @@ public interface PasswordResetTokenRepository extends JpaRepository<PasswordRese
     
     void deleteByUser(User user);
 }
+

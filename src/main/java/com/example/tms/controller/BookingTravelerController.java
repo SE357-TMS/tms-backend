@@ -103,3 +103,4 @@ public class BookingTravelerController {
         return ResponseEntity.ok(ApiResponse.success("Booking traveler deleted successfully"));
     }
 }
+

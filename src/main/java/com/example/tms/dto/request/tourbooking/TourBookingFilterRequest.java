@@ -3,7 +3,7 @@ package com.example.tms.dto.request.tourbooking;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import com.example.tms.enity.TourBooking;
+import com.example.tms.entity.TourBooking;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -34,3 +34,4 @@ public class TourBookingFilterRequest {
     private String sortBy = "createdAt";
     private String sortDirection = "desc";
 }
+

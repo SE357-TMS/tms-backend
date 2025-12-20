@@ -18,3 +18,4 @@ public interface EmailService {
      */
     void sendPasswordChangedEmail(String toEmail, String userName);
 }
+

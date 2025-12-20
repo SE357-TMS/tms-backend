@@ -34,3 +34,4 @@ public class CreateTourBookingRequest {
     @Valid
     private List<TravelerRequest> travelers;
 }
+

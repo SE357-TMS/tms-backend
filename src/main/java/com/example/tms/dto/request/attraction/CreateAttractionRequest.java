@@ -22,3 +22,4 @@ public class CreateAttractionRequest {
     
     private UUID categoryId;
 }
+

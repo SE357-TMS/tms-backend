@@ -13,3 +13,4 @@ public class CheckoutCartRequest {
     @Valid
     private List<CartItemBookingRequest> items;
 }
+

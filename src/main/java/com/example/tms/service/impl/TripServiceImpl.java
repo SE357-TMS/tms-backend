@@ -1,5 +1,6 @@
 package com.example.tms.service.impl;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -16,9 +17,10 @@ import com.example.tms.dto.request.trip.CreateTripRequest;
 import com.example.tms.dto.request.trip.TripFilterRequest;
 import com.example.tms.dto.request.trip.UpdateTripRequest;
 import com.example.tms.dto.response.PaginationResponse;
+import com.example.tms.dto.response.trip.TripAvailableDatesResponse;
 import com.example.tms.dto.response.trip.TripResponse;
-import com.example.tms.enity.Route;
-import com.example.tms.enity.Trip;
+import com.example.tms.entity.Route;
+import com.example.tms.entity.Trip;
 import com.example.tms.repository.RouteRepository;
 import com.example.tms.repository.TripRepository;
 import com.example.tms.service.interface_.TripService;
@@ -193,4 +195,36 @@ public class TripServiceImpl implements TripService {
             return criteriaBuilder.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
         };
     }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<TripAvailableDatesResponse> getAvailableTripsByRouteId(UUID routeId) {
+        // Verify route exists
+        routeRepository.findById(routeId)
+                .filter(r -> r.getDeletedAt() == 0)
+                .orElseThrow(() -> new RuntimeException("Route not found"));
+        
+        // Get trips with departure date >= today + 3 days
+        LocalDate minDate = LocalDate.now().plusDays(3);
+        List<Trip> trips = tripRepository.findAvailableTripsByRouteId(routeId, minDate);
+        
+        return trips.stream()
+                .map(TripAvailableDatesResponse::new)
+                .collect(Collectors.toList());
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public TripAvailableDatesResponse getNearestAvailableTrip(UUID routeId) {
+        // Verify route exists
+        routeRepository.findById(routeId)
+                .filter(r -> r.getDeletedAt() == 0)
+                .orElseThrow(() -> new RuntimeException("Route not found"));
+        
+        LocalDate minDate = LocalDate.now().plusDays(3);
+        return tripRepository.findNearestAvailableTrip(routeId, minDate)
+                .map(TripAvailableDatesResponse::new)
+                .orElse(null);
+    }
 }
+

@@ -23,3 +23,4 @@ public class CreateInvoiceRequest {
     @Size(max = 50, message = "Payment method must be at most 50 characters")
     private String paymentMethod;
 }
+

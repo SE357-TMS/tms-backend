@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import com.example.tms.enity.User;
+import com.example.tms.entity.User;
 import com.example.tms.repository.UserRepository;
 
 @Component
@@ -39,3 +39,4 @@ public class DataInitializer implements ApplicationRunner {
         );
     }
 }
+

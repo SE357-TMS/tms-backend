@@ -6,3 +6,4 @@ import lombok.Data;
 public class LogoutRequest {
     private String refreshToken;
 }
+

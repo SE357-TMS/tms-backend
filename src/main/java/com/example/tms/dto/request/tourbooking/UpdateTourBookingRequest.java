@@ -3,7 +3,7 @@ package com.example.tms.dto.request.tourbooking;
 import java.util.List;
 
 import com.example.tms.dto.request.booking.TravelerRequest;
-import com.example.tms.enity.TourBooking;
+import com.example.tms.entity.TourBooking;
 
 import jakarta.validation.Valid;
 import lombok.Getter;

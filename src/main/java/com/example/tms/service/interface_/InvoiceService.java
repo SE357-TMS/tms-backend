@@ -26,3 +26,4 @@ public interface InvoiceService {
     
     InvoiceResponse markAsRefunded(UUID id);
 }
+

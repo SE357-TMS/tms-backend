@@ -15,3 +15,4 @@ public class StaffStatisticsResponse {
     private Long totalTripsCreated;
     private Long totalRoutesCreated;
 }
+

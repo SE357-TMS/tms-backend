@@ -1,6 +1,6 @@
 package com.example.tms.repository;
 
-import com.example.tms.enity.Cart;
+import com.example.tms.entity.Cart;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,4 +14,5 @@ public interface CartRepository extends JpaRepository<Cart, UUID> {
     @Query("SELECT c FROM Cart c WHERE c.user.id = :userId AND c.deletedAt = 0")
     Optional<Cart> findByUserId(@Param("userId") UUID userId);
 }
+
 

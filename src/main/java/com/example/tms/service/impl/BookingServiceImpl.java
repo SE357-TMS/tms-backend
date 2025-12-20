@@ -31,14 +31,14 @@ import com.example.tms.dto.response.booking.CancelBookingResponse;
 import com.example.tms.dto.response.booking.CheckoutCartResponse;
 import com.example.tms.dto.response.booking.InvoiceResponse;
 import com.example.tms.dto.response.booking.TravelerResponse;
-import com.example.tms.enity.BookingTraveler;
-import com.example.tms.enity.Cart;
-import com.example.tms.enity.CartItem;
-import com.example.tms.enity.Invoice;
-import com.example.tms.enity.TourBooking;
-import com.example.tms.enity.TourBookingDetail;
-import com.example.tms.enity.Trip;
-import com.example.tms.enity.User;
+import com.example.tms.entity.BookingTraveler;
+import com.example.tms.entity.Cart;
+import com.example.tms.entity.CartItem;
+import com.example.tms.entity.Invoice;
+import com.example.tms.entity.TourBooking;
+import com.example.tms.entity.TourBookingDetail;
+import com.example.tms.entity.Trip;
+import com.example.tms.entity.User;
 import com.example.tms.repository.BookingTravelerRepository;
 import com.example.tms.repository.CartItemRepository;
 import com.example.tms.repository.CartRepository;
@@ -669,3 +669,4 @@ public class BookingServiceImpl implements BookingService {
                 .build();
     }
 }
+

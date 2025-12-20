@@ -11,7 +11,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.example.tms.enity.User;
+import com.example.tms.entity.User;
 
 public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificationExecutor<User> {
 	// Tìm user ACTIVE (deleted_at = 0)
@@ -59,3 +59,4 @@ public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificat
 	@Query(value = "SELECT * FROM user WHERE email = :email", nativeQuery = true)
 	List<User> findAllByEmailIncludingDeleted(@Param("email") String email);
 }
+

@@ -30,3 +30,4 @@ public interface UserService {
     List<UserResponse> getUsersByRole(String role);
     Page<UserResponse> getUsersByRoleWithPagination(String role, Pageable pageable);
 }
+

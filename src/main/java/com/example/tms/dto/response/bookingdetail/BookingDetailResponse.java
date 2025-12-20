@@ -3,7 +3,7 @@ package com.example.tms.dto.response.bookingdetail;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.example.tms.enity.TourBookingDetail;
+import com.example.tms.entity.TourBookingDetail;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -31,3 +31,4 @@ public class BookingDetailResponse {
         this.updatedAt = detail.getUpdatedAt();
     }
 }
+

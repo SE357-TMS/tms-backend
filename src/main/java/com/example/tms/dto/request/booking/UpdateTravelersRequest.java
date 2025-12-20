@@ -18,3 +18,4 @@ public class UpdateTravelersRequest {
     @Valid
     private List<UpdateTravelerRequest> travelers;
 }
+

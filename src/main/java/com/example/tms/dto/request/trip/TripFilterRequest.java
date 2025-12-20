@@ -3,7 +3,7 @@ package com.example.tms.dto.request.trip;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import com.example.tms.enity.Trip;
+import com.example.tms.entity.Trip;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -27,3 +27,4 @@ public class TripFilterRequest {
     private String sortBy = "departureDate";
     private String sortDirection = "asc";
 }
+

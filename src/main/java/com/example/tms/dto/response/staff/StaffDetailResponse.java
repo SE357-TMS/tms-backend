@@ -48,3 +48,4 @@ public class StaffDetailResponse {
         private Integer numberOfTravelers;
     }
 }
+

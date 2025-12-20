@@ -18,7 +18,7 @@ import com.example.tms.dto.request.staff.StaffFilterRequest;
 import com.example.tms.dto.request.staff.UpdateStaffRequest;
 import com.example.tms.dto.response.staff.StaffDetailResponse;
 import com.example.tms.dto.response.staff.StaffListResponse;
-import com.example.tms.enity.User;
+import com.example.tms.entity.User;
 import com.example.tms.repository.UserRepository;
 import com.example.tms.service.interface_.StaffService;
 
@@ -210,3 +210,4 @@ public class StaffServiceImpl implements StaffService {
         }
     }
 }
+

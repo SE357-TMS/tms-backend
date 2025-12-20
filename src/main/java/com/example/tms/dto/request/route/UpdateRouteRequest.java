@@ -1,6 +1,6 @@
 package com.example.tms.dto.request.route;
 
-import com.example.tms.enity.Route;
+import com.example.tms.entity.Route;
 
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -26,3 +26,4 @@ public class UpdateRouteRequest {
     
     private Route.Status status;
 }
+

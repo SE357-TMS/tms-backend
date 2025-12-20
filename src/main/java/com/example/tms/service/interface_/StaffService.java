@@ -16,3 +16,4 @@ public interface StaffService {
     StaffDetailResponse updateStaff(UUID id, UpdateStaffRequest request);
     void deleteStaff(UUID id);
 }
+

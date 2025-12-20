@@ -5,7 +5,7 @@ import java.io.IOException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.example.tms.enity.UnusedAccessToken;
+import com.example.tms.entity.UnusedAccessToken;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -38,3 +38,4 @@ public class JwtBlackListFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 }
+

@@ -8,7 +8,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import com.example.tms.enity.User;
+import com.example.tms.entity.User;
 import com.example.tms.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -36,3 +36,4 @@ public class CustomUserDetailsService implements UserDetailsService {
         );
     }
 }
+

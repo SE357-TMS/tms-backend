@@ -11,3 +11,4 @@ public class ImageUploadResponse {
     private String imageUrl;
     private String message;
 }
+

@@ -23,3 +23,4 @@ public interface RouteAttractionService {
     
     void delete(UUID id);
 }
+

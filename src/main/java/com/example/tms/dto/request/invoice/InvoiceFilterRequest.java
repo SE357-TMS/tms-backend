@@ -2,7 +2,7 @@ package com.example.tms.dto.request.invoice;
 
 import java.util.UUID;
 
-import com.example.tms.enity.Invoice;
+import com.example.tms.entity.Invoice;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -23,3 +23,4 @@ public class InvoiceFilterRequest {
     private String sortBy = "createdAt";
     private String sortDirection = "desc";
 }
+

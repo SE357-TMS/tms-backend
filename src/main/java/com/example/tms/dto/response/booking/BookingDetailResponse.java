@@ -52,3 +52,4 @@ public class BookingDetailResponse {
     private Boolean canCancel; // Can cancel booking
     private Boolean canPay; // Can pay invoice
 }
+

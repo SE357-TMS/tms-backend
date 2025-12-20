@@ -20,3 +20,4 @@ public class InvoiceResponse {
     private String paymentStatus; // UNPAID, PAID, REFUNDED
     private String paymentMethod;
 }
+

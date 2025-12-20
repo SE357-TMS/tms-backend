@@ -18,3 +18,4 @@ public class MessageConstants {
     public static final String MSG21_ROUTE_ATTRACTION_NOT_FOUND = "RouteAttraction không tồn tại";
     public static final String MSG22_FAVORITE_TOUR_NOT_FOUND = "FavoriteTour không tồn tại";
 }
+
