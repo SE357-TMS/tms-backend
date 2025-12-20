@@ -47,3 +47,4 @@ public interface CustomerTourService {
      */
     boolean isFavorited(UUID userId, UUID routeId);
 }
+

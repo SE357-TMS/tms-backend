@@ -8,6 +8,7 @@ import com.example.tms.dto.request.route.RouteFilterRequest;
 import com.example.tms.dto.request.route.UpdateRouteRequest;
 import com.example.tms.dto.response.PaginationResponse;
 import com.example.tms.dto.response.route.RouteDetailResponse;
+import com.example.tms.dto.response.route.RouteFullDetailResponse;
 import com.example.tms.dto.response.route.RouteResponse;
 
 public interface RouteService {
@@ -18,6 +19,16 @@ public interface RouteService {
     
     RouteDetailResponse getDetailById(UUID id);
     
+    /**
+     * Get full route detail including trips and itinerary
+     */
+    RouteFullDetailResponse getFullDetailById(UUID id);
+
+    /**
+     * Get images associated with a route
+     */
+    List<String> getRouteImages(UUID id);
+    
     PaginationResponse<RouteResponse> getAll(RouteFilterRequest filter);
     
     List<RouteResponse> getAllNoPagination();
@@ -26,3 +37,4 @@ public interface RouteService {
     
     void delete(UUID id);
 }
+

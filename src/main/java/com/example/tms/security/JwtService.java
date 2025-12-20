@@ -12,8 +12,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.tms.enity.RefreshToken;
-import com.example.tms.enity.UnusedAccessToken;
+import com.example.tms.entity.RefreshToken;
+import com.example.tms.entity.UnusedAccessToken;
 import com.example.tms.repository.RefreshTokenRepository;
 import com.example.tms.repository.UnusedAccessTokenRepository;
 
@@ -150,3 +150,4 @@ public class JwtService {
                 .compact();
     }
 }
+

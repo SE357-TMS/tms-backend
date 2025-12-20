@@ -28,3 +28,4 @@ public class TravelerRequest {
     @Size(max = 100, message = "Identity document must not exceed 100 characters")
     private String identityDoc;
 }
+

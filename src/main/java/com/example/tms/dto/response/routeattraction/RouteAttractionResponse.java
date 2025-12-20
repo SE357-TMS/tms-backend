@@ -3,7 +3,7 @@ package com.example.tms.dto.response.routeattraction;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.example.tms.enity.RouteAttraction;
+import com.example.tms.entity.RouteAttraction;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -39,3 +39,4 @@ public class RouteAttractionResponse {
         this.updatedAt = routeAttraction.getUpdatedAt();
     }
 }
+

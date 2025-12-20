@@ -46,3 +46,4 @@ public class AddStaffRequest {
     @Pattern(regexp = "^(M|F|O)$", message = "Gender must be M, F, or O")
     private String gender;
 }
+

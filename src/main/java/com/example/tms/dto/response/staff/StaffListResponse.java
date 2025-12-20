@@ -30,3 +30,4 @@ public class StaffListResponse {
     // Statistics
     private Long totalManagedBookings;
 }
+

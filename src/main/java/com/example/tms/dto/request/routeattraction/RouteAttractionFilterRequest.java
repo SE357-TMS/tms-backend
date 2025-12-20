@@ -20,3 +20,4 @@ public class RouteAttractionFilterRequest {
     private String sortBy = "day";
     private String sortDirection = "asc";
 }
+

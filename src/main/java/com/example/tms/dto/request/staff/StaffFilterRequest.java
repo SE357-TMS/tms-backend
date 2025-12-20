@@ -16,3 +16,4 @@ public class StaffFilterRequest {
     private String sortBy = "id";
     private String sortDirection = "DESC";
 }
+

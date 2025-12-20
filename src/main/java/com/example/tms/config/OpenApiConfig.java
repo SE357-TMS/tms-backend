@@ -54,3 +54,4 @@ public class OpenApiConfig {
                                         .description("Enter your JWT token in the format: <your_token>")));
     }
 }
+

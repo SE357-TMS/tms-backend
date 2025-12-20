@@ -117,3 +117,4 @@ public class RouteAttractionController {
         return ResponseEntity.ok(ApiResponse.success("Route attraction deleted successfully"));
     }
 }
+

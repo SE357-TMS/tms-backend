@@ -1,8 +1,11 @@
 package com.example.tms.service.impl;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -12,15 +15,18 @@ import com.example.tms.dto.request.cart.AddToCartRequest;
 import com.example.tms.dto.request.cart.UpdateCartItemRequest;
 import com.example.tms.dto.response.cart.CartItemResponse;
 import com.example.tms.dto.response.cart.CartResponse;
-import com.example.tms.enity.Cart;
-import com.example.tms.enity.CartItem;
-import com.example.tms.enity.Trip;
-import com.example.tms.enity.User;
+import com.example.tms.entity.Cart;
+import com.example.tms.entity.CartItem;
+import com.example.tms.entity.TourBooking;
+import com.example.tms.entity.Trip;
+import com.example.tms.entity.User;
 import com.example.tms.repository.CartItemRepository;
 import com.example.tms.repository.CartRepository;
+import com.example.tms.repository.TourBookingRepository;
 import com.example.tms.repository.TripRepository;
 import com.example.tms.repository.UserRepository;
 import com.example.tms.service.interface_.CartService;
+import com.example.tms.service.interface_.CustomerBookingService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,6 +38,8 @@ public class CartServiceImpl implements CartService {
     private final CartItemRepository cartItemRepository;
     private final UserRepository userRepository;
     private final TripRepository tripRepository;
+    private final CustomerBookingService customerBookingService;
+    private final TourBookingRepository tourBookingRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -120,7 +128,23 @@ public class CartServiceImpl implements CartService {
             throw new RuntimeException("Cart item does not belong to user's cart");
         }
         
+        customerBookingService.deleteBookingByCartItem(cartItemId);
         cartItemRepository.delete(cartItem);
+    }
+
+    @Override
+    @Transactional
+    public void removeMultipleFromCart(String username, List<UUID> cartItemIds) {
+        User user = getUserByUsername(username);
+        Cart cart = getOrCreateCart(user);
+        
+        for (UUID cartItemId : cartItemIds) {
+            CartItem cartItem = cartItemRepository.findById(cartItemId).orElse(null);
+            if (cartItem != null && cartItem.getCart().getId().equals(cart.getId())) {
+                customerBookingService.deleteBookingByCartItem(cartItemId);
+                cartItemRepository.delete(cartItem);
+            }
+        }
     }
 
     @Override
@@ -128,6 +152,8 @@ public class CartServiceImpl implements CartService {
     public void clearCart(String username) {
         User user = getUserByUsername(username);
         Cart cart = getOrCreateCart(user);
+        List<CartItem> currentItems = cartItemRepository.findByCartId(cart.getId());
+        currentItems.forEach(item -> customerBookingService.deleteBookingByCartItem(item.getId()));
         cartItemRepository.deleteAllByCartId(cart.getId());
     }
 
@@ -163,9 +189,18 @@ public class CartServiceImpl implements CartService {
         response.setId(cart.getId());
         response.setUserId(cart.getUser().getId());
         
+        Map<UUID, TourBooking> pendingBookings = loadPendingBookings(items);
         List<CartItemResponse> itemResponses = items.stream()
-                .map(CartItemResponse::new)
-                .collect(Collectors.toList());
+            .map(item -> {
+                CartItemResponse itemResponse = new CartItemResponse(item);
+                TourBooking pendingBooking = pendingBookings.get(item.getId());
+                if (pendingBooking != null) {
+                itemResponse.setPendingBookingId(pendingBooking.getId());
+                itemResponse.setPendingBookingStatus(pendingBooking.getStatus().name());
+                }
+                return itemResponse;
+            })
+            .collect(Collectors.toList());
         
         response.setItems(itemResponses);
         
@@ -178,4 +213,21 @@ public class CartServiceImpl implements CartService {
         
         return response;
     }
+
+    private Map<UUID, TourBooking> loadPendingBookings(List<CartItem> items) {
+        if (items == null || items.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        List<UUID> cartItemIds = items.stream()
+                .map(CartItem::getId)
+                .collect(Collectors.toList());
+        List<TourBooking> bookings = tourBookingRepository.findByCartItemIdInAndStatusIn(
+                cartItemIds, List.of(TourBooking.Status.PENDING));
+
+        return bookings.stream()
+                .filter(b -> b.getCartItemId() != null)
+                .collect(Collectors.toMap(TourBooking::getCartItemId, Function.identity(), (first, second) -> first));
+    }
 }
+

@@ -1,5 +1,6 @@
 package com.example.tms.service.impl;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -19,11 +20,14 @@ import com.example.tms.dto.request.route.RouteFilterRequest;
 import com.example.tms.dto.request.route.UpdateRouteRequest;
 import com.example.tms.dto.response.PaginationResponse;
 import com.example.tms.dto.response.route.RouteDetailResponse;
+import com.example.tms.dto.response.route.RouteFullDetailResponse;
 import com.example.tms.dto.response.route.RouteResponse;
-import com.example.tms.enity.Route;
-import com.example.tms.enity.RouteAttraction;
+import com.example.tms.entity.Route;
+import com.example.tms.entity.RouteAttraction;
+import com.example.tms.entity.Trip;
 import com.example.tms.repository.RouteAttractionRepository;
 import com.example.tms.repository.RouteRepository;
+import com.example.tms.repository.TripRepository;
 import com.example.tms.service.interface_.CloudinaryService;
 import com.example.tms.service.interface_.RouteService;
 
@@ -35,6 +39,7 @@ public class RouteServiceImpl implements RouteService {
 
     private final RouteRepository routeRepository;
     private final RouteAttractionRepository routeAttractionRepository;
+    private final TripRepository tripRepository;
     private final CloudinaryService cloudinaryService;
 
     @Override
@@ -110,6 +115,69 @@ public class RouteServiceImpl implements RouteService {
         response.setItinerary(itinerary);
         
         return response;
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public RouteFullDetailResponse getFullDetailById(UUID id) {
+        Route route = routeRepository.findById(id)
+                .filter(r -> r.getDeletedAt() == 0)
+                .orElseThrow(() -> new RuntimeException("Route not found"));
+        
+        RouteFullDetailResponse response = new RouteFullDetailResponse(route);
+        
+        // Get available trips (departure date >= today + 3 days)
+        LocalDate minDate = LocalDate.now().plusDays(3);
+        List<Trip> trips = tripRepository.findAvailableTripsByRouteId(id, minDate);
+        List<RouteFullDetailResponse.AvailableTrip> availableTrips = trips.stream()
+                .filter(t -> t.getTotalSeats() - t.getBookedSeats() > 0)
+                .map(RouteFullDetailResponse.AvailableTrip::new)
+                .collect(Collectors.toList());
+        response.setAvailableTrips(availableTrips);
+        
+        // Get itinerary (route attractions grouped by day)
+        List<RouteAttraction> attractions = routeAttractionRepository.findByRouteIdOrderByDayAndOrder(id);
+        Map<Integer, List<RouteAttraction>> groupedByDay = attractions.stream()
+                .collect(Collectors.groupingBy(RouteAttraction::getDay));
+        
+        List<RouteFullDetailResponse.ItineraryDay> itinerary = new ArrayList<>();
+        for (int day = 1; day <= (route.getDurationDays() != null ? route.getDurationDays() : 0); day++) {
+            RouteFullDetailResponse.ItineraryDay itineraryDay = new RouteFullDetailResponse.ItineraryDay();
+            itineraryDay.setDay(day);
+            
+            List<RouteAttraction> dayAttractions = groupedByDay.getOrDefault(day, new ArrayList<>());
+            List<RouteFullDetailResponse.ItineraryAttraction> attractionList = dayAttractions.stream()
+                    .map(ra -> {
+                        RouteFullDetailResponse.ItineraryAttraction ia = new RouteFullDetailResponse.ItineraryAttraction();
+                        ia.setAttractionId(ra.getAttraction().getId());
+                        ia.setAttractionName(ra.getAttraction().getName());
+                        ia.setLocation(ra.getAttraction().getLocation());
+                        if (ra.getAttraction().getCategory() != null) {
+                            ia.setCategoryName(ra.getAttraction().getCategory().getName());
+                        }
+                        ia.setOrderInDay(ra.getOrderInDay());
+                        ia.setActivityDescription(ra.getActivityDescription());
+                        return ia;
+                    })
+                    .sorted((a, b) -> a.getOrderInDay().compareTo(b.getOrderInDay()))
+                    .collect(Collectors.toList());
+            
+            itineraryDay.setAttractions(attractionList);
+            itinerary.add(itineraryDay);
+        }
+        
+        response.setItinerary(itinerary);
+        
+        return response;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> getRouteImages(UUID id) {
+        routeRepository.findById(id)
+                .filter(r -> r.getDeletedAt() == 0)
+                .orElseThrow(() -> new RuntimeException("Route not found"));
+        return cloudinaryService.getRouteImages(id);
     }
 
     @Override
@@ -212,3 +280,4 @@ public class RouteServiceImpl implements RouteService {
         };
     }
 }
+

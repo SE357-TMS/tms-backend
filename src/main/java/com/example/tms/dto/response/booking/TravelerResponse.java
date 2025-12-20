@@ -20,3 +20,4 @@ public class TravelerResponse {
     private LocalDate dateOfBirth;
     private String identityDoc;
 }
+

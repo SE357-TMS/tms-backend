@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.example.tms.enity.Attraction;
+import com.example.tms.entity.Attraction;
 
 public interface AttractionRepository extends JpaRepository<Attraction, UUID>, JpaSpecificationExecutor<Attraction> {
     
@@ -28,4 +28,5 @@ public interface AttractionRepository extends JpaRepository<Attraction, UUID>, J
            "GROUP BY a ORDER BY favCount DESC")
     List<Object[]> findFavoriteDestinations(Pageable pageable);
 }
+
 

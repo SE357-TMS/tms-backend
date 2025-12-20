@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.example.tms.enity.FavoriteTour;
+import com.example.tms.entity.FavoriteTour;
 
 public interface FavoriteTourRepository extends JpaRepository<FavoriteTour, UUID> {
     
@@ -24,4 +24,5 @@ public interface FavoriteTourRepository extends JpaRepository<FavoriteTour, UUID
            "WHERE f.user.id = :userId AND f.route.id = :routeId AND f.deletedAt = 0")
     boolean existsByUserIdAndRouteId(@Param("userId") UUID userId, @Param("routeId") UUID routeId);
 }
+
 

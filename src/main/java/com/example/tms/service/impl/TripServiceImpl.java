@@ -19,8 +19,8 @@ import com.example.tms.dto.request.trip.UpdateTripRequest;
 import com.example.tms.dto.response.PaginationResponse;
 import com.example.tms.dto.response.trip.TripAvailableDatesResponse;
 import com.example.tms.dto.response.trip.TripResponse;
-import com.example.tms.enity.Route;
-import com.example.tms.enity.Trip;
+import com.example.tms.entity.Route;
+import com.example.tms.entity.Trip;
 import com.example.tms.repository.RouteRepository;
 import com.example.tms.repository.TripRepository;
 import com.example.tms.service.interface_.TripService;
@@ -227,3 +227,4 @@ public class TripServiceImpl implements TripService {
                 .orElse(null);
     }
 }
+

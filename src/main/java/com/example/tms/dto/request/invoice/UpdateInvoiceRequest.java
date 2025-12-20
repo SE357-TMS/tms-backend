@@ -2,7 +2,7 @@ package com.example.tms.dto.request.invoice;
 
 import java.math.BigDecimal;
 
-import com.example.tms.enity.Invoice;
+import com.example.tms.entity.Invoice;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Size;
@@ -21,3 +21,4 @@ public class UpdateInvoiceRequest {
     @Size(max = 50, message = "Payment method must be at most 50 characters")
     private String paymentMethod;
 }
+

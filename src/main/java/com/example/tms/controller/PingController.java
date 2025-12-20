@@ -22,3 +22,4 @@ public class PingController {
         return ResponseEntity.ok("customer ok");
     }
 }
+

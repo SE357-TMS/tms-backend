@@ -2,7 +2,7 @@ package com.example.tms.dto.request;
 
 import java.time.LocalDate;
 
-import com.example.tms.enity.User;
+import com.example.tms.entity.User;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
@@ -26,3 +26,4 @@ public class UpdateUserRequest {
     private LocalDate birthday;
     private User.Gender gender;
 }
+

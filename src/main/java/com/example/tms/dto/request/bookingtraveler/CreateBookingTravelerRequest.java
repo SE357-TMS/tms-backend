@@ -3,7 +3,7 @@ package com.example.tms.dto.request.bookingtraveler;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import com.example.tms.enity.BookingTraveler;
+import com.example.tms.entity.BookingTraveler;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -29,3 +29,4 @@ public class CreateBookingTravelerRequest {
     @Size(max = 100, message = "Identity document must be at most 100 characters")
     private String identityDoc;
 }
+

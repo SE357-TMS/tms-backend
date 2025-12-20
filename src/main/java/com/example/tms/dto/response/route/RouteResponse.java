@@ -3,7 +3,7 @@ package com.example.tms.dto.response.route;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.example.tms.enity.Route;
+import com.example.tms.entity.Route;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -33,3 +33,4 @@ public class RouteResponse {
         this.updatedAt = route.getUpdatedAt();
     }
 }
+

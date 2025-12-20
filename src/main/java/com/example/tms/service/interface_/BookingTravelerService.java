@@ -19,3 +19,4 @@ public interface BookingTravelerService {
     
     void delete(UUID id);
 }
+

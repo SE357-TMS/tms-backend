@@ -7,9 +7,10 @@ import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.tms.enity.UnusedAccessToken;
+import com.example.tms.entity.UnusedAccessToken;
 
 public interface UnusedAccessTokenRepository extends JpaRepository<UnusedAccessToken, UUID> {
     Optional<UnusedAccessToken> findByToken(String token);
     List<UnusedAccessToken> findByExpireAtBefore(Date expireAt);
 }
+

@@ -1,5 +1,6 @@
 package com.example.tms.controller;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -93,6 +94,19 @@ public class CartController {
         return ResponseEntity.ok(ApiResponse.success("Item removed from cart successfully"));
     }
 
+    @Operation(summary = "Remove multiple items from cart", description = "Remove multiple items from the shopping cart")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Items removed from cart successfully")
+    })
+    @PreAuthorize("hasAnyAuthority('CUSTOMER', 'ADMIN', 'STAFF')")
+    @PostMapping("/items/bulk-delete")
+    public ResponseEntity<ApiResponse<Void>> removeMultipleFromCart(
+            Authentication authentication,
+            @RequestBody List<UUID> cartItemIds) {
+        cartService.removeMultipleFromCart(authentication.getName(), cartItemIds);
+        return ResponseEntity.ok(ApiResponse.success("Items removed from cart successfully"));
+    }
+
     @Operation(summary = "Clear cart", description = "Remove all items from the shopping cart")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Cart cleared successfully")
@@ -117,3 +131,4 @@ public class CartController {
         return ResponseEntity.ok(ApiResponse.success("Check completed", result));
     }
 }
+

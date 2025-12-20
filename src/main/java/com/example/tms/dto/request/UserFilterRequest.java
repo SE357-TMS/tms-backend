@@ -20,3 +20,4 @@ public class UserFilterRequest {
     // Admin options
     private Boolean includeDeleted = false;  // Include soft-deleted users
 }
+

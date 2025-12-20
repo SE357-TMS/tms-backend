@@ -29,3 +29,4 @@ public class HomePageDataResponse {
         private Long tourCount;
     }
 }
+

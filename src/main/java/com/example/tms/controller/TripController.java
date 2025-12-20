@@ -136,3 +136,4 @@ public class TripController {
         return ResponseEntity.ok(ApiResponse.success("Nearest trip retrieved successfully", response));
     }
 }
+

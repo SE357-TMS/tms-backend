@@ -2,7 +2,7 @@ package com.example.tms.dto.request.attraction;
 
 import java.util.UUID;
 
-import com.example.tms.enity.Attraction;
+import com.example.tms.entity.Attraction;
 
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -24,3 +24,4 @@ public class UpdateAttractionRequest {
     
     private Attraction.Status status;
 }
+

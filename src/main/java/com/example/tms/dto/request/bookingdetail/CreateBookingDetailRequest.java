@@ -22,3 +22,4 @@ public class CreateBookingDetailRequest {
     @Min(value = 0, message = "Number of children cannot be negative")
     private Integer noChildren;
 }
+

@@ -135,3 +135,4 @@ public interface CloudinaryService {
      */
     List<String> getAttractionImages(UUID attractionId);
 }
+

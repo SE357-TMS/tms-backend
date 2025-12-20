@@ -1,6 +1,6 @@
 package com.example.tms.repository;
 
-import com.example.tms.enity.BookingTraveler;
+import com.example.tms.entity.BookingTraveler;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,4 +19,5 @@ public interface BookingTravelerRepository extends JpaRepository<BookingTraveler
     @Query("SELECT bt FROM BookingTraveler bt WHERE bt.id = :id AND bt.tourBooking.id = :bookingId AND bt.deletedAt = 0")
     Optional<BookingTraveler> findByIdAndBookingId(@Param("id") UUID id, @Param("bookingId") UUID bookingId);
 }
+
 

@@ -40,3 +40,4 @@ public class SearchSuggestionResponse {
         private String categoryName;
     }
 }
+

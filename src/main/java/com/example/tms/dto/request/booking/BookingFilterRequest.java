@@ -21,3 +21,4 @@ public class BookingFilterRequest {
     private String sortBy = "departureDate";
     private String sortDirection = "DESC";
 }
+

@@ -11,7 +11,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.example.tms.enity.Trip;
+import com.example.tms.entity.Trip;
 
 import jakarta.persistence.LockModeType;
 
@@ -34,4 +34,5 @@ public interface TripRepository extends JpaRepository<Trip, UUID>, JpaSpecificat
     @Query("SELECT t FROM Trip t WHERE t.route.id = :routeId AND t.departureDate >= :minDate AND t.status = 'SCHEDULED' AND t.deletedAt = 0 AND (t.totalSeats - t.bookedSeats) > 0 ORDER BY t.departureDate ASC LIMIT 1")
     Optional<Trip> findNearestAvailableTrip(@Param("routeId") UUID routeId, @Param("minDate") LocalDate minDate);
 }
+
 

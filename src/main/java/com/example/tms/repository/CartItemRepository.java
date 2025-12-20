@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.example.tms.enity.CartItem;
+import com.example.tms.entity.CartItem;
 
 public interface CartItemRepository extends JpaRepository<CartItem, UUID> {
     
@@ -39,4 +39,5 @@ public interface CartItemRepository extends JpaRepository<CartItem, UUID> {
     @Query("DELETE FROM CartItem ci WHERE ci.cart.id = :cartId")
     void deleteAllByCartId(@Param("cartId") UUID cartId);
 }
+
 

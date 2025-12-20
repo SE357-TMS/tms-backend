@@ -25,3 +25,4 @@ public class TourSearchRequest {
     private Integer size = 10;
     private UUID attractionId;
 }
+

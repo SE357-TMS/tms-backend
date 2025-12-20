@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.example.tms.enity.Route;
+import com.example.tms.entity.Route;
 
 public interface RouteRepository extends JpaRepository<Route, UUID>, JpaSpecificationExecutor<Route> {
     
@@ -41,4 +41,5 @@ public interface RouteRepository extends JpaRepository<Route, UUID>, JpaSpecific
            "OR LOWER(a.location) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<Route> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
 }
+
 

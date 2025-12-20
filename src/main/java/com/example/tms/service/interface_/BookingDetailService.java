@@ -18,3 +18,4 @@ public interface BookingDetailService {
     
     void delete(UUID id);
 }
+

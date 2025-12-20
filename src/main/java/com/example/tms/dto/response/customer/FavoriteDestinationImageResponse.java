@@ -15,3 +15,4 @@ public class FavoriteDestinationImageResponse {
     private UUID attractionId;
     private String image;
 }
+

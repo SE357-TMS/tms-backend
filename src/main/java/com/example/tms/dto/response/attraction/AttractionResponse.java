@@ -3,7 +3,7 @@ package com.example.tms.dto.response.attraction;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.example.tms.enity.Attraction;
+import com.example.tms.entity.Attraction;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -35,3 +35,4 @@ public class AttractionResponse {
         this.updatedAt = attraction.getUpdatedAt();
     }
 }
+

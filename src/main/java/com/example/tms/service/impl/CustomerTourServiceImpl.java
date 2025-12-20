@@ -24,12 +24,12 @@ import com.example.tms.dto.response.customer.FavoriteDestinationImageResponse;
 import com.example.tms.dto.response.customer.HomePageDataResponse;
 import com.example.tms.dto.response.customer.SearchSuggestionResponse;
 import com.example.tms.dto.response.customer.TourCardResponse;
-import com.example.tms.enity.Attraction;
-import com.example.tms.enity.FavoriteTour;
-import com.example.tms.enity.Route;
-import com.example.tms.enity.RouteAttraction;
-import com.example.tms.enity.Trip;
-import com.example.tms.enity.User;
+import com.example.tms.entity.Attraction;
+import com.example.tms.entity.FavoriteTour;
+import com.example.tms.entity.Route;
+import com.example.tms.entity.RouteAttraction;
+import com.example.tms.entity.Trip;
+import com.example.tms.entity.User;
 import com.example.tms.repository.AttractionRepository;
 import com.example.tms.repository.FavoriteTourRepository;
 import com.example.tms.repository.RouteAttractionRepository;
@@ -384,3 +384,4 @@ public class CustomerTourServiceImpl implements CustomerTourService {
         return true;
     }
 }
+

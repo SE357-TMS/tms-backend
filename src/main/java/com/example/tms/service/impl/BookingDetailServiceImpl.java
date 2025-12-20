@@ -8,8 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.tms.dto.request.bookingdetail.CreateBookingDetailRequest;
 import com.example.tms.dto.request.bookingdetail.UpdateBookingDetailRequest;
 import com.example.tms.dto.response.bookingdetail.BookingDetailResponse;
-import com.example.tms.enity.TourBooking;
-import com.example.tms.enity.TourBookingDetail;
+import com.example.tms.entity.TourBooking;
+import com.example.tms.entity.TourBookingDetail;
 import com.example.tms.repository.TourBookingDetailRepository;
 import com.example.tms.repository.TourBookingRepository;
 import com.example.tms.service.interface_.BookingDetailService;
@@ -89,3 +89,4 @@ public class BookingDetailServiceImpl implements BookingDetailService {
         bookingDetailRepository.save(detail);
     }
 }
+

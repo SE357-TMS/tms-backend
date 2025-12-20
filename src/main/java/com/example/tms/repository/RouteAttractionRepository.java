@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.example.tms.enity.RouteAttraction;
+import com.example.tms.entity.RouteAttraction;
 
 public interface RouteAttractionRepository extends JpaRepository<RouteAttraction, UUID>, JpaSpecificationExecutor<RouteAttraction> {
     
@@ -25,4 +25,5 @@ public interface RouteAttractionRepository extends JpaRepository<RouteAttraction
     @Query("SELECT ra FROM RouteAttraction ra WHERE ra.route.id IN :routeIds AND ra.deletedAt = 0")
     List<RouteAttraction> findByRouteIdIn(@Param("routeIds") List<UUID> routeIds);
 }
+
 

@@ -16,7 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
-import com.example.tms.enity.Route;
+import com.example.tms.entity.Route;
 import com.example.tms.repository.AttractionRepository;
 import com.example.tms.repository.RouteRepository;
 import com.example.tms.service.interface_.CloudinaryService;
@@ -320,3 +320,4 @@ public class CloudinaryServiceImpl implements CloudinaryService {
         }
     }
 }
+

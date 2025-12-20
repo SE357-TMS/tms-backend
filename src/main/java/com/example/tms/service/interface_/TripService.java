@@ -34,3 +34,4 @@ public interface TripService {
      */
     TripAvailableDatesResponse getNearestAvailableTrip(UUID routeId);
 }
+

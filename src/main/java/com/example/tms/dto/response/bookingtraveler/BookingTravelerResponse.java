@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.example.tms.enity.BookingTraveler;
+import com.example.tms.entity.BookingTraveler;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -34,3 +34,4 @@ public class BookingTravelerResponse {
         this.updatedAt = traveler.getUpdatedAt();
     }
 }
+

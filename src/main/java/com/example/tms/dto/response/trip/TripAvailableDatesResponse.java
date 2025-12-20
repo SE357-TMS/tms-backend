@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.UUID;
 
-import com.example.tms.enity.Trip;
+import com.example.tms.entity.Trip;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -41,3 +41,4 @@ public class TripAvailableDatesResponse {
         this.status = trip.getStatus();
     }
 }
+

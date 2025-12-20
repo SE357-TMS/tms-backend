@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.UUID;
 
-import com.example.tms.enity.Trip;
+import com.example.tms.entity.Trip;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -52,3 +52,4 @@ public class TripResponse {
         this.updatedAt = trip.getUpdatedAt();
     }
 }
+

@@ -43,3 +43,4 @@ public class UpdateStaffRequest {
     @Pattern(regexp = "^(M|F|O)$", message = "Gender must be M, F, or O")
     private String gender;
 }
+
