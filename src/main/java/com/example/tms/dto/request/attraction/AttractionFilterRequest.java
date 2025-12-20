@@ -2,7 +2,7 @@ package com.example.tms.dto.request.attraction;
 
 import java.util.UUID;
 
-import com.example.tms.enity.Attraction;
+import com.example.tms.entity.Attraction;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -23,3 +23,4 @@ public class AttractionFilterRequest {
     private String sortBy = "createdAt";
     private String sortDirection = "desc";
 }
+

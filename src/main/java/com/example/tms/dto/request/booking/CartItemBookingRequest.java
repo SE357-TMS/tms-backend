@@ -27,3 +27,4 @@ public class CartItemBookingRequest {
     @Valid
     private List<TravelerRequest> travelers;
 }
+

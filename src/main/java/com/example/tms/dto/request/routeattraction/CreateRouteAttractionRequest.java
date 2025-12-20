@@ -27,3 +27,4 @@ public class CreateRouteAttractionRequest {
     
     private String activityDescription;
 }
+

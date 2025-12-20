@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.example.tms.enity.Invoice;
+import com.example.tms.entity.Invoice;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -43,3 +43,4 @@ public class InvoiceResponse {
         this.updatedAt = invoice.getUpdatedAt();
     }
 }
+

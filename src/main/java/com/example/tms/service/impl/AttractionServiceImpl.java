@@ -17,8 +17,8 @@ import com.example.tms.dto.request.attraction.CreateAttractionRequest;
 import com.example.tms.dto.request.attraction.UpdateAttractionRequest;
 import com.example.tms.dto.response.PaginationResponse;
 import com.example.tms.dto.response.attraction.AttractionResponse;
-import com.example.tms.enity.Attraction;
-import com.example.tms.enity.Category;
+import com.example.tms.entity.Attraction;
+import com.example.tms.entity.Category;
 import com.example.tms.repository.AttractionRepository;
 import com.example.tms.repository.CategoryRepository;
 import com.example.tms.service.interface_.AttractionService;
@@ -157,3 +157,4 @@ public class AttractionServiceImpl implements AttractionService {
         };
     }
 }
+

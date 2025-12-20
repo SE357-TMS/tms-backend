@@ -20,12 +20,12 @@ import com.example.tms.dto.request.tourbooking.TourBookingFilterRequest;
 import com.example.tms.dto.request.tourbooking.UpdateTourBookingRequest;
 import com.example.tms.dto.response.PaginationResponse;
 import com.example.tms.dto.response.tourbooking.TourBookingResponse;
-import com.example.tms.enity.BookingTraveler;
-import com.example.tms.enity.Invoice;
-import com.example.tms.enity.TourBooking;
-import com.example.tms.enity.TourBookingDetail;
-import com.example.tms.enity.Trip;
-import com.example.tms.enity.User;
+import com.example.tms.entity.BookingTraveler;
+import com.example.tms.entity.Invoice;
+import com.example.tms.entity.TourBooking;
+import com.example.tms.entity.TourBookingDetail;
+import com.example.tms.entity.Trip;
+import com.example.tms.entity.User;
 import com.example.tms.repository.BookingTravelerRepository;
 import com.example.tms.repository.InvoiceRepository;
 import com.example.tms.repository.TourBookingDetailRepository;
@@ -287,3 +287,4 @@ public class TourBookingServiceImpl implements TourBookingService {
         };
     }
 }
+

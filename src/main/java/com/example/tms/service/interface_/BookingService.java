@@ -81,3 +81,4 @@ public interface BookingService {
      */
     CancelBookingResponse previewCancelBooking(UUID userId, UUID bookingId);
 }
+

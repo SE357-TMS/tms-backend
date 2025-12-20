@@ -1,6 +1,6 @@
 package com.example.tms.repository;
 
-import com.example.tms.enity.TourBookingDetail;
+import com.example.tms.entity.TourBookingDetail;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,4 +14,5 @@ public interface TourBookingDetailRepository extends JpaRepository<TourBookingDe
     @Query("SELECT tbd FROM TourBookingDetail tbd WHERE tbd.tourBooking.id = :bookingId AND tbd.deletedAt = 0")
     Optional<TourBookingDetail> findByBookingId(@Param("bookingId") UUID bookingId);
 }
+
 

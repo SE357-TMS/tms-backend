@@ -38,3 +38,4 @@ public class CreateTripRequest {
     @Size(max = 255, message = "Pick up location must be at most 255 characters")
     private String pickUpLocation;
 }
+

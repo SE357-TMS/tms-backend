@@ -22,3 +22,4 @@ public interface PasswordResetService {
      */
     boolean validateToken(String token);
 }
+

@@ -17,8 +17,8 @@ import com.example.tms.dto.request.invoice.InvoiceFilterRequest;
 import com.example.tms.dto.request.invoice.UpdateInvoiceRequest;
 import com.example.tms.dto.response.PaginationResponse;
 import com.example.tms.dto.response.invoice.InvoiceResponse;
-import com.example.tms.enity.Invoice;
-import com.example.tms.enity.TourBooking;
+import com.example.tms.entity.Invoice;
+import com.example.tms.entity.TourBooking;
 import com.example.tms.repository.InvoiceRepository;
 import com.example.tms.repository.TourBookingRepository;
 import com.example.tms.service.interface_.InvoiceService;
@@ -190,3 +190,4 @@ public class InvoiceServiceImpl implements InvoiceService {
         };
     }
 }
+

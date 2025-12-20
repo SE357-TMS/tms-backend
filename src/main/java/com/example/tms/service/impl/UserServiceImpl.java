@@ -20,7 +20,7 @@ import com.example.tms.dto.request.UpdateUserRequest;
 import com.example.tms.dto.request.UserFilterRequest;
 import com.example.tms.dto.response.PaginationResponse;
 import com.example.tms.dto.response.UserResponse;
-import com.example.tms.enity.User;
+import com.example.tms.entity.User;
 import com.example.tms.repository.UserRepository;
 import com.example.tms.service.interface_.UserService;
 
@@ -318,3 +318,4 @@ public class UserServiceImpl implements UserService {
         return userPage.map(UserResponse::new);
     }
 }
+

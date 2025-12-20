@@ -22,3 +22,4 @@ public class UpdateRouteAttractionRequest {
     
     private String activityDescription;
 }
+

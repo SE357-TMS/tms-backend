@@ -23,3 +23,4 @@ public interface AttractionService {
     
     void delete(UUID id);
 }
+

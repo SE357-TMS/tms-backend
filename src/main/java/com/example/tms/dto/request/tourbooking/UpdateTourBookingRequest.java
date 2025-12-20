@@ -1,6 +1,6 @@
 package com.example.tms.dto.request.tourbooking;
 
-import com.example.tms.enity.TourBooking;
+import com.example.tms.entity.TourBooking;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -11,3 +11,4 @@ public class UpdateTourBookingRequest {
     
     private TourBooking.Status status;
 }
+

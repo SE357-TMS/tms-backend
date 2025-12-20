@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.UUID;
 
-import com.example.tms.enity.Trip;
+import com.example.tms.entity.Trip;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
@@ -36,3 +36,4 @@ public class UpdateTripRequest {
     
     private Trip.Status status;
 }
+

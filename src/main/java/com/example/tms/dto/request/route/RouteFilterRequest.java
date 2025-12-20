@@ -1,6 +1,6 @@
 package com.example.tms.dto.request.route;
 
-import com.example.tms.enity.Route;
+import com.example.tms.entity.Route;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -21,3 +21,4 @@ public class RouteFilterRequest {
     private String sortBy = "createdAt";
     private String sortDirection = "desc";
 }
+

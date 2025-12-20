@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.example.tms.enity.User;
+import com.example.tms.entity.User;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -46,3 +46,4 @@ public class UserResponse {
         this.version = user.getVersion();
     }
 }
+

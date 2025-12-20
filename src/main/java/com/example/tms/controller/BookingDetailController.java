@@ -103,3 +103,4 @@ public class BookingDetailController {
         return ResponseEntity.ok(ApiResponse.success("Booking detail deleted successfully"));
     }
 }
+

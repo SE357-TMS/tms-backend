@@ -15,3 +15,4 @@ public class ForgotPasswordRequest {
     @Email(message = "Email must be valid")
     private String email;
 }
+

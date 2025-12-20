@@ -21,3 +21,4 @@ public class CancelBookingResponse {
     private BigDecimal penaltyAmount;
     private String estimatedRefundTime;
 }
+

@@ -1,7 +1,7 @@
 package com.example.tms.service.impl;
 
-import com.example.tms.enity.PasswordResetToken;
-import com.example.tms.enity.User;
+import com.example.tms.entity.PasswordResetToken;
+import com.example.tms.entity.User;
 import com.example.tms.repository.PasswordResetTokenRepository;
 import com.example.tms.repository.UserRepository;
 import com.example.tms.service.interface_.EmailService;
@@ -136,3 +136,4 @@ public class PasswordResetServiceImpl implements PasswordResetService {
                 .orElse(false);
     }
 }
+

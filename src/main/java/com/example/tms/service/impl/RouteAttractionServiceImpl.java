@@ -17,9 +17,9 @@ import com.example.tms.dto.request.routeattraction.RouteAttractionFilterRequest;
 import com.example.tms.dto.request.routeattraction.UpdateRouteAttractionRequest;
 import com.example.tms.dto.response.PaginationResponse;
 import com.example.tms.dto.response.routeattraction.RouteAttractionResponse;
-import com.example.tms.enity.Attraction;
-import com.example.tms.enity.Route;
-import com.example.tms.enity.RouteAttraction;
+import com.example.tms.entity.Attraction;
+import com.example.tms.entity.Route;
+import com.example.tms.entity.RouteAttraction;
 import com.example.tms.repository.AttractionRepository;
 import com.example.tms.repository.RouteAttractionRepository;
 import com.example.tms.repository.RouteRepository;
@@ -163,3 +163,4 @@ public class RouteAttractionServiceImpl implements RouteAttractionService {
         };
     }
 }
+
