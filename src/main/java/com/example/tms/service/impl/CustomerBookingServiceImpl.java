@@ -401,17 +401,10 @@ public class CustomerBookingServiceImpl implements CustomerBookingService {
                     booking.getSeatsBooked() + ", Added: " + travelers.size());
         }
 
-        // Option A: CONFIRMED means payment completed
+        // This method is called when customer clicks "Book Now" to proceed to payment
+        // Status will be updated to CONFIRMED after payment is completed (via
+        // markAsPaid or PayOS webhook)
         Invoice invoice = invoiceRepository.findByBookingId(bookingId).orElse(null);
-        if (invoice == null || invoice.getPaymentStatus() != Invoice.PaymentStatus.PAID) {
-            throw new BadRequestException("Please complete payment before confirming the booking");
-        }
-
-        if (booking.getStatus() == TourBooking.Status.PENDING) {
-            booking.setStatus(TourBooking.Status.CONFIRMED);
-            bookingRepository.save(booking);
-            removeCartItemForBooking(booking);
-        }
         String routeImage = getRouteImage(booking.getTrip());
 
         CustomerBookingResponse response = new CustomerBookingResponse(booking, routeImage);
