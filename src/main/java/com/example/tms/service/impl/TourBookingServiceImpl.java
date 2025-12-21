@@ -116,6 +116,8 @@ public class TourBookingServiceImpl implements TourBookingService {
             }
             traveler.setDateOfBirth(travelerReq.getDateOfBirth());
             traveler.setIdentityDoc(travelerReq.getIdentityDoc());
+            traveler.setEmail(travelerReq.getEmail());
+            traveler.setPhoneNumber(travelerReq.getPhoneNumber());
             bookingTravelerRepository.save(traveler);
         }
 
@@ -236,6 +238,8 @@ public class TourBookingServiceImpl implements TourBookingService {
                 }
                 traveler.setDateOfBirth(travelerReq.getDateOfBirth());
                 traveler.setIdentityDoc(travelerReq.getIdentityDoc());
+                traveler.setEmail(travelerReq.getEmail());
+                traveler.setPhoneNumber(travelerReq.getPhoneNumber());
                 bookingTravelerRepository.save(traveler);
             }
 
@@ -325,6 +329,8 @@ public class TourBookingServiceImpl implements TourBookingService {
                     info.setGender(t.getGender() != null ? t.getGender().name() : null);
                     info.setDateOfBirth(t.getDateOfBirth());
                     info.setIdentityDoc(t.getIdentityDoc());
+                    info.setEmail(t.getEmail());
+                    info.setPhoneNumber(t.getPhoneNumber());
                     return info;
                 })
                 .collect(Collectors.toList());
@@ -398,4 +404,3 @@ public class TourBookingServiceImpl implements TourBookingService {
         };
     }
 }
-
