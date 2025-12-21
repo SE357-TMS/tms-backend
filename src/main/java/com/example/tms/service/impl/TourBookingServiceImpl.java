@@ -335,13 +335,93 @@ public class TourBookingServiceImpl implements TourBookingService {
         booking.setStatus(TourBooking.Status.CANCELED);
         tourBookingRepository.save(booking);
 
-        // Update invoice status if paid
+        // Update invoice status: PAID -> REFUNDED, UNPAID stays UNPAID
         invoiceRepository.findByBookingId(id).ifPresent(inv -> {
             if (inv.getPaymentStatus() == Invoice.PaymentStatus.PAID) {
                 inv.setPaymentStatus(Invoice.PaymentStatus.REFUNDED);
                 invoiceRepository.save(inv);
             }
+            // If UNPAID, leave it as UNPAID (no action needed)
         });
+    }
+
+    @Override
+    @Transactional
+    public void removeTraveler(UUID bookingId, UUID travelerId) {
+        // Get booking
+        TourBooking booking = tourBookingRepository.findById(bookingId)
+                .filter(b -> b.getDeletedAt() == 0)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        // Check if booking is canceled or completed
+        if (booking.getStatus() == TourBooking.Status.CANCELED) {
+            throw new RuntimeException("Cannot remove traveler from canceled booking");
+        }
+
+        if (booking.getStatus() == TourBooking.Status.COMPLETED) {
+            throw new RuntimeException("Cannot remove traveler from completed booking");
+        }
+
+        // Get the invoice
+        Invoice invoice = invoiceRepository.findByBookingId(bookingId)
+                .orElseThrow(() -> new RuntimeException("Invoice not found"));
+
+        // Business rule: Cannot remove traveler within 3 days of departure if already
+        // paid
+        Trip trip = booking.getTrip();
+        long daysUntilDeparture = java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), trip.getDepartureDate());
+
+        if (daysUntilDeparture < 3 && invoice.getPaymentStatus() == Invoice.PaymentStatus.PAID) {
+            throw new RuntimeException("Cannot remove traveler within 3 days of departure for paid bookings");
+        }
+
+        // Get the traveler
+        BookingTraveler traveler = bookingTravelerRepository.findById(travelerId)
+                .filter(t -> t.getDeletedAt() == 0 && t.getTourBooking().getId().equals(bookingId))
+                .orElseThrow(() -> new RuntimeException("Traveler not found in this booking"));
+
+        // Get all travelers for this booking
+        List<BookingTraveler> allTravelers = bookingTravelerRepository.findByBookingId(bookingId)
+                .stream()
+                .filter(t -> t.getDeletedAt() == 0)
+                .collect(Collectors.toList());
+
+        // Remove traveler (soft delete)
+        traveler.markAsDeleted();
+        bookingTravelerRepository.save(traveler);
+
+        // Check if this is the last traveler
+        if (allTravelers.size() == 1) {
+            // Cancel the entire booking
+            cancel(bookingId);
+            return;
+        }
+
+        // Update booking seats
+        booking.setSeatsBooked(booking.getSeatsBooked() - 1);
+
+        // Update total price
+        BigDecimal newTotalPrice = trip.getPrice().multiply(BigDecimal.valueOf(booking.getSeatsBooked()));
+        booking.setTotalPrice(newTotalPrice);
+        tourBookingRepository.save(booking);
+
+        // Update trip booked seats
+        trip.setBookedSeats(trip.getBookedSeats() - 1);
+        tripRepository.save(trip);
+
+        // Update invoice total amount
+        invoice.setTotalAmount(newTotalPrice);
+
+        // Handle refund if already paid
+        if (invoice.getPaymentStatus() == Invoice.PaymentStatus.PAID) {
+            // Calculate refund amount (1 seat price)
+            BigDecimal refundAmount = trip.getPrice();
+            // For simplicity, we'll mark as partially refunded
+            // In real system, you'd process actual refund through payment gateway
+            invoice.setPaymentStatus(Invoice.PaymentStatus.REFUNDED);
+        }
+
+        invoiceRepository.save(invoice);
     }
 
     private TourBookingResponse buildResponse(TourBooking booking) {

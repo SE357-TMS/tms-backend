@@ -76,8 +76,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     public PaginationResponse<InvoiceResponse> getAll(InvoiceFilterRequest filter) {
         Sort sort = Sort.by(
                 filter.getSortDirection().equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC,
-                filter.getSortBy()
-        );
+                filter.getSortBy());
         Pageable pageable = PageRequest.of(filter.getPage() - 1, filter.getPageSize(), sort);
 
         Specification<Invoice> spec = buildSpecification(filter);
@@ -128,6 +127,12 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .filter(i -> i.getDeletedAt() == 0)
                 .orElseThrow(() -> new RuntimeException("Invoice not found"));
 
+        // Check if booking is canceled
+        TourBooking booking = invoice.getTourBooking();
+        if (booking.getStatus() == TourBooking.Status.CANCELED) {
+            throw new RuntimeException("Cannot process payment for canceled booking");
+        }
+
         if (invoice.getPaymentStatus() == Invoice.PaymentStatus.PAID) {
             throw new RuntimeException("Invoice is already paid");
         }
@@ -139,7 +144,6 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoice.setPaymentMethod(paymentMethod);
 
         // Update booking status to CONFIRMED
-        TourBooking booking = invoice.getTourBooking();
         if (booking.getStatus() == TourBooking.Status.PENDING) {
             booking.setStatus(TourBooking.Status.CONFIRMED);
             tourBookingRepository.save(booking);
@@ -169,7 +173,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     private Specification<Invoice> buildSpecification(InvoiceFilterRequest filter) {
         return (root, query, criteriaBuilder) -> {
             var predicates = new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
-            
+
             predicates.add(criteriaBuilder.equal(root.get("deletedAt"), 0L));
 
             if (filter.getBookingId() != null) {
@@ -190,4 +194,3 @@ public class InvoiceServiceImpl implements InvoiceService {
         };
     }
 }
-
