@@ -70,7 +70,7 @@ public class TourBookingServiceImpl implements TourBookingService {
 
         // Calculate total travelers
         int totalTravelers = request.getNoAdults() + request.getNoChildren();
-        
+
         // Validate travelers list
         if (request.getTravelers().size() != totalTravelers) {
             throw new RuntimeException("Number of travelers does not match the sum of adults and children");
@@ -116,6 +116,8 @@ public class TourBookingServiceImpl implements TourBookingService {
             }
             traveler.setDateOfBirth(travelerReq.getDateOfBirth());
             traveler.setIdentityDoc(travelerReq.getIdentityDoc());
+            traveler.setEmail(travelerReq.getEmail());
+            traveler.setPhoneNumber(travelerReq.getPhoneNumber());
             bookingTravelerRepository.save(traveler);
         }
 
@@ -143,8 +145,7 @@ public class TourBookingServiceImpl implements TourBookingService {
     public PaginationResponse<TourBookingResponse> getAll(TourBookingFilterRequest filter) {
         Sort sort = Sort.by(
                 filter.getSortDirection().equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC,
-                filter.getSortBy()
-        );
+                filter.getSortBy());
         Pageable pageable = PageRequest.of(filter.getPage() - 1, filter.getPageSize(), sort);
 
         Specification<TourBooking> spec = buildSpecification(filter);
@@ -174,8 +175,121 @@ public class TourBookingServiceImpl implements TourBookingService {
                 .filter(b -> b.getDeletedAt() == 0)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
 
+        // Update status if provided
         if (request.getStatus() != null) {
+            if (request.getStatus() == TourBooking.Status.CONFIRMED) {
+                Invoice existingInvoice = invoiceRepository.findByBookingId(id).orElse(null);
+                if (existingInvoice == null || existingInvoice.getPaymentStatus() != Invoice.PaymentStatus.PAID) {
+                    throw new RuntimeException("Cannot confirm booking before payment is completed");
+                }
+            }
             booking.setStatus(request.getStatus());
+        }
+
+        // Update travelers if provided (only before departure)
+        if (request.getTravelers() != null && !request.getTravelers().isEmpty()) {
+            // IMPORTANT: Lock Trip to prevent race condition when changing seat count
+            Trip trip = tripRepository.findByIdWithLock(booking.getTrip().getId())
+                    .orElseThrow(() -> new RuntimeException("Trip not found"));
+
+            // Check invoice status for payment restrictions
+            Invoice invoice = invoiceRepository.findByBookingId(id).orElse(null);
+            boolean isUnpaid = invoice == null || invoice.getPaymentStatus() == Invoice.PaymentStatus.UNPAID;
+            boolean isPaid = invoice != null && invoice.getPaymentStatus() == Invoice.PaymentStatus.PAID;
+
+            // Editing travelers is allowed only when:
+            // - invoice is UNPAID, OR
+            // - time to departure is greater than 3 days
+            boolean isMoreThan3DaysToDeparture = trip.getDepartureDate() != null
+                    && trip.getDepartureDate().isAfter(LocalDate.now().plusDays(3));
+            if (!isUnpaid && !isMoreThan3DaysToDeparture) {
+                throw new RuntimeException(
+                        "Cannot edit travelers after payment when departure is within 3 days");
+            }
+
+            // Check if trip has not departed yet
+            if (trip.getDepartureDate().isBefore(LocalDate.now())) {
+                throw new RuntimeException("Cannot edit travelers after departure date");
+            }
+
+            // Check if booking is still editable
+            if (booking.getStatus() == TourBooking.Status.CANCELED ||
+                    booking.getStatus() == TourBooking.Status.COMPLETED) {
+                throw new RuntimeException("Cannot edit canceled or completed booking");
+            }
+
+            int newTotalTravelers = request.getTravelers().size();
+            int currentTravelers = booking.getSeatsBooked();
+
+            // If payment already completed, allow only traveler info updates (no
+            // add/remove)
+            if (isPaid && newTotalTravelers != currentTravelers) {
+                throw new RuntimeException("Cannot add or remove travelers after payment is completed");
+            }
+
+            // If number of travelers changed (only when Unpaid), check seat availability
+            if (newTotalTravelers != currentTravelers) {
+                int seatDifference = newTotalTravelers - currentTravelers;
+
+                // If adding travelers, check availability
+                if (seatDifference > 0) {
+                    int availableSeats = trip.getTotalSeats() - trip.getBookedSeats();
+                    if (seatDifference > availableSeats) {
+                        throw new RuntimeException("Not enough available seats. Available: " + availableSeats);
+                    }
+                }
+
+                // Update trip booked seats
+                trip.setBookedSeats(trip.getBookedSeats() + seatDifference);
+                tripRepository.save(trip);
+
+                // Update booking seats and price
+                booking.setSeatsBooked(newTotalTravelers);
+                BigDecimal newPrice = trip.getPrice().multiply(BigDecimal.valueOf(newTotalTravelers));
+                booking.setTotalPrice(newPrice);
+
+                // Update invoice if exists
+                if (invoice != null) {
+                    invoice.setTotalAmount(newPrice);
+                    invoiceRepository.save(invoice);
+                }
+            }
+
+            // Delete old travelers (soft delete)
+            List<BookingTraveler> oldTravelers = bookingTravelerRepository.findByBookingId(id);
+            for (BookingTraveler traveler : oldTravelers) {
+                traveler.markAsDeleted();
+                bookingTravelerRepository.save(traveler);
+            }
+
+            // Create new travelers
+            for (TravelerRequest travelerReq : request.getTravelers()) {
+                BookingTraveler traveler = new BookingTraveler();
+                traveler.setTourBooking(booking);
+                traveler.setFullName(travelerReq.getFullName());
+                if (travelerReq.getGender() != null) {
+                    traveler.setGender(BookingTraveler.Gender.valueOf(travelerReq.getGender()));
+                }
+                traveler.setDateOfBirth(travelerReq.getDateOfBirth());
+                traveler.setIdentityDoc(travelerReq.getIdentityDoc());
+                traveler.setEmail(travelerReq.getEmail());
+                traveler.setPhoneNumber(travelerReq.getPhoneNumber());
+                bookingTravelerRepository.save(traveler);
+            }
+
+            // Update booking detail
+            tourBookingDetailRepository.findByBookingId(id).ifPresent(detail -> {
+                int noAdults = request.getNoAdults() != null ? request.getNoAdults()
+                        : (int) request.getTravelers().stream()
+                                .filter(t -> t.getDateOfBirth() == null ||
+                                        t.getDateOfBirth().isBefore(LocalDate.now().minusYears(12)))
+                                .count();
+                int noChildren = newTotalTravelers - noAdults;
+
+                detail.setNoAdults(noAdults);
+                detail.setNoChildren(noChildren);
+                tourBookingDetailRepository.save(detail);
+            });
         }
 
         TourBooking updated = tourBookingRepository.save(booking);
@@ -222,10 +336,10 @@ public class TourBookingServiceImpl implements TourBookingService {
         tourBookingRepository.save(booking);
 
         // Update invoice status if paid
-        invoiceRepository.findByBookingId(id).ifPresent(invoice -> {
-            if (invoice.getPaymentStatus() == Invoice.PaymentStatus.PAID) {
-                invoice.setPaymentStatus(Invoice.PaymentStatus.REFUNDED);
-                invoiceRepository.save(invoice);
+        invoiceRepository.findByBookingId(id).ifPresent(inv -> {
+            if (inv.getPaymentStatus() == Invoice.PaymentStatus.PAID) {
+                inv.setPaymentStatus(Invoice.PaymentStatus.REFUNDED);
+                invoiceRepository.save(inv);
             }
         });
     }
@@ -249,18 +363,20 @@ public class TourBookingServiceImpl implements TourBookingService {
                     info.setGender(t.getGender() != null ? t.getGender().name() : null);
                     info.setDateOfBirth(t.getDateOfBirth());
                     info.setIdentityDoc(t.getIdentityDoc());
+                    info.setEmail(t.getEmail());
+                    info.setPhoneNumber(t.getPhoneNumber());
                     return info;
                 })
                 .collect(Collectors.toList());
         response.setTravelers(travelerResponses);
 
         // Get invoice
-        invoiceRepository.findByBookingId(booking.getId()).ifPresent(invoice -> {
+        invoiceRepository.findByBookingId(booking.getId()).ifPresent(inv -> {
             TourBookingResponse.InvoiceInfoResponse invoiceInfo = new TourBookingResponse.InvoiceInfoResponse();
-            invoiceInfo.setId(invoice.getId());
-            invoiceInfo.setTotalAmount(invoice.getTotalAmount());
-            invoiceInfo.setPaymentStatus(invoice.getPaymentStatus().name());
-            invoiceInfo.setPaymentMethod(invoice.getPaymentMethod());
+            invoiceInfo.setId(inv.getId());
+            invoiceInfo.setTotalAmount(inv.getTotalAmount());
+            invoiceInfo.setPaymentStatus(inv.getPaymentStatus().name());
+            invoiceInfo.setPaymentMethod(inv.getPaymentMethod());
             response.setInvoice(invoiceInfo);
         });
 
@@ -270,7 +386,7 @@ public class TourBookingServiceImpl implements TourBookingService {
     private Specification<TourBooking> buildSpecification(TourBookingFilterRequest filter) {
         return (root, query, criteriaBuilder) -> {
             var predicates = new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
-            
+
             predicates.add(criteriaBuilder.equal(root.get("deletedAt"), 0L));
 
             if (filter.getUserId() != null) {
@@ -283,8 +399,42 @@ public class TourBookingServiceImpl implements TourBookingService {
                 predicates.add(criteriaBuilder.equal(root.get("status"), filter.getStatus()));
             }
 
+            // Search by keyword (customer name, email, or route name)
+            if (filter.getKeyword() != null && !filter.getKeyword().trim().isEmpty()) {
+                String keyword = "%" + filter.getKeyword().toLowerCase().trim() + "%";
+                var userJoin = root.join("user", jakarta.persistence.criteria.JoinType.LEFT);
+                var tripJoin = root.join("trip", jakarta.persistence.criteria.JoinType.LEFT);
+                var routeJoin = tripJoin.join("route", jakarta.persistence.criteria.JoinType.LEFT);
+
+                predicates.add(criteriaBuilder.or(
+                        criteriaBuilder.like(criteriaBuilder.lower(userJoin.get("fullName")), keyword),
+                        criteriaBuilder.like(criteriaBuilder.lower(userJoin.get("email")), keyword),
+                        criteriaBuilder.like(criteriaBuilder.lower(routeJoin.get("routeName")), keyword)));
+            }
+
+            // Filter by booking date range
+            if (filter.getFromDate() != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(
+                        root.get("createdAt").as(java.time.LocalDate.class), filter.getFromDate()));
+            }
+            if (filter.getToDate() != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(
+                        root.get("createdAt").as(java.time.LocalDate.class), filter.getToDate()));
+            }
+
+            // Filter by departure date range
+            if (filter.getDepartureFrom() != null) {
+                var tripJoin = root.join("trip", jakarta.persistence.criteria.JoinType.LEFT);
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(
+                        tripJoin.get("departureDate"), filter.getDepartureFrom()));
+            }
+            if (filter.getDepartureTo() != null) {
+                var tripJoin = root.join("trip", jakarta.persistence.criteria.JoinType.LEFT);
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(
+                        tripJoin.get("departureDate"), filter.getDepartureTo()));
+            }
+
             return criteriaBuilder.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
         };
     }
 }
-

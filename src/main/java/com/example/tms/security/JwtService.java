@@ -76,7 +76,12 @@ public class JwtService {
 
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
-        // Add roles as claim if needed
+        // Add roles and fullName as claims
+        if (!userDetails.getAuthorities().isEmpty()) {
+            claims.put("role", userDetails.getAuthorities().iterator().next().getAuthority());
+        }
+        // You can add fullName here if User entity is passed
+        claims.put("fullName", userDetails.getUsername()); // Default to username, update if needed
         return createToken(claims, userDetails.getUsername());
     }
 
@@ -150,4 +155,3 @@ public class JwtService {
                 .compact();
     }
 }
-

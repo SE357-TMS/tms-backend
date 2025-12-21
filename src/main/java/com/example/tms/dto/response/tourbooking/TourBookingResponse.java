@@ -3,6 +3,7 @@ package com.example.tms.dto.response.tourbooking;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,6 +20,8 @@ public class TourBookingResponse {
     private String routeName;
     private LocalDate departureDate;
     private LocalDate returnDate;
+    private LocalTime pickUpTime;
+    private String pickUpLocation;
     private UUID userId;
     private String userName;
     private String userEmail;
@@ -31,13 +34,15 @@ public class TourBookingResponse {
     private InvoiceInfoResponse invoice;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    
+
     public TourBookingResponse(TourBooking booking) {
         this.id = booking.getId();
         if (booking.getTrip() != null) {
             this.tripId = booking.getTrip().getId();
             this.departureDate = booking.getTrip().getDepartureDate();
             this.returnDate = booking.getTrip().getReturnDate();
+            this.pickUpTime = booking.getTrip().getPickUpTime();
+            this.pickUpLocation = booking.getTrip().getPickUpLocation();
             if (booking.getTrip().getRoute() != null) {
                 this.routeName = booking.getTrip().getRoute().getRouteName();
             }
@@ -53,7 +58,7 @@ public class TourBookingResponse {
         this.createdAt = booking.getCreatedAt();
         this.updatedAt = booking.getUpdatedAt();
     }
-    
+
     @Getter
     @Setter
     public static class TravelerInfoResponse {
@@ -62,8 +67,10 @@ public class TourBookingResponse {
         private String gender;
         private LocalDate dateOfBirth;
         private String identityDoc;
+        private String email;
+        private String phoneNumber;
     }
-    
+
     @Getter
     @Setter
     public static class InvoiceInfoResponse {
@@ -73,4 +80,3 @@ public class TourBookingResponse {
         private String paymentMethod;
     }
 }
-

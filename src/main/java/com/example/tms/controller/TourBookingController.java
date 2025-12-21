@@ -43,12 +43,13 @@ public class TourBookingController {
 
     @Operation(summary = "Create booking", description = "Create a new tour booking")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Booking created successfully"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Booking created successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input")
     })
     @PreAuthorize("isAuthenticated()")
     @PostMapping
-    public ResponseEntity<ApiResponse<TourBookingResponse>> create(@Valid @RequestBody CreateTourBookingRequest request) {
+    public ResponseEntity<ApiResponse<TourBookingResponse>> create(
+            @Valid @RequestBody CreateTourBookingRequest request) {
         TourBookingResponse response = tourBookingService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Booking created successfully", response));
@@ -56,8 +57,8 @@ public class TourBookingController {
 
     @Operation(summary = "Get booking by ID", description = "Retrieve booking details by ID")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Booking retrieved successfully"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Booking not found")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Booking retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Booking not found")
     })
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/{id}")
@@ -67,21 +68,24 @@ public class TourBookingController {
         return ResponseEntity.ok(ApiResponse.success("Booking retrieved successfully", response));
     }
 
-    @Operation(summary = "Get all bookings", description = "Retrieve a paginated list of bookings with optional filters (Admin/Staff only)")
+    @Operation(summary = "Get all bookings", description = "Retrieve a paginated list of bookings with optional filters (Admin/Staff only). "
+            +
+            "Supports search by keyword (customer name, email, route name), " +
+            "filter by status, user ID, trip ID, booking date range, and departure date range.")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Bookings retrieved successfully")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Bookings retrieved successfully")
     })
     @PreAuthorize("hasAnyAuthority('ADMIN', 'STAFF')")
     @GetMapping
     public ResponseEntity<ApiResponse<PaginationResponse<TourBookingResponse>>> getAll(
-            @ModelAttribute TourBookingFilterRequest filter) {
+            @Parameter(description = "Filter parameters: keyword, status, userId, tripId, fromDate, toDate, departureFrom, departureTo, page, pageSize, sortBy, sortDirection") @ModelAttribute TourBookingFilterRequest filter) {
         PaginationResponse<TourBookingResponse> response = tourBookingService.getAll(filter);
         return ResponseEntity.ok(ApiResponse.success("Bookings retrieved successfully", response));
     }
 
     @Operation(summary = "Get bookings by user ID", description = "Retrieve all bookings for a specific user")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Bookings retrieved successfully")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Bookings retrieved successfully")
     })
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/user/{userId}")
@@ -91,10 +95,13 @@ public class TourBookingController {
         return ResponseEntity.ok(ApiResponse.success("Bookings retrieved successfully", response));
     }
 
-    @Operation(summary = "Update booking status", description = "Update booking status by ID (Admin/Staff only)")
+    @Operation(summary = "Update booking", description = "Update booking by ID (Admin/Staff only). Can update status and/or travelers. "
+            +
+            "Travelers can only be edited before departure date and if booking is not canceled/completed.")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Booking updated successfully"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Booking not found")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Booking updated successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid update - trip has departed or booking is canceled/completed"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Booking not found")
     })
     @PreAuthorize("hasAnyAuthority('ADMIN', 'STAFF')")
     @PutMapping("/{id}")
@@ -107,8 +114,8 @@ public class TourBookingController {
 
     @Operation(summary = "Cancel booking", description = "Cancel a booking")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Booking canceled successfully"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Booking not found")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Booking canceled successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Booking not found")
     })
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/{id}/cancel")
@@ -120,8 +127,8 @@ public class TourBookingController {
 
     @Operation(summary = "Delete booking", description = "Delete booking by ID (Admin only)")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Booking deleted successfully"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Booking not found")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Booking deleted successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Booking not found")
     })
     @PreAuthorize("hasAuthority('ADMIN')")
     @DeleteMapping("/{id}")
