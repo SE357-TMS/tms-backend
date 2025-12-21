@@ -177,12 +177,35 @@ public class TourBookingServiceImpl implements TourBookingService {
 
         // Update status if provided
         if (request.getStatus() != null) {
+            if (request.getStatus() == TourBooking.Status.CONFIRMED) {
+                Invoice existingInvoice = invoiceRepository.findByBookingId(id).orElse(null);
+                if (existingInvoice == null || existingInvoice.getPaymentStatus() != Invoice.PaymentStatus.PAID) {
+                    throw new RuntimeException("Cannot confirm booking before payment is completed");
+                }
+            }
             booking.setStatus(request.getStatus());
         }
 
         // Update travelers if provided (only before departure)
         if (request.getTravelers() != null && !request.getTravelers().isEmpty()) {
-            Trip trip = booking.getTrip();
+            // IMPORTANT: Lock Trip to prevent race condition when changing seat count
+            Trip trip = tripRepository.findByIdWithLock(booking.getTrip().getId())
+                    .orElseThrow(() -> new RuntimeException("Trip not found"));
+
+            // Check invoice status for payment restrictions
+            Invoice invoice = invoiceRepository.findByBookingId(id).orElse(null);
+            boolean isUnpaid = invoice == null || invoice.getPaymentStatus() == Invoice.PaymentStatus.UNPAID;
+            boolean isPaid = invoice != null && invoice.getPaymentStatus() == Invoice.PaymentStatus.PAID;
+
+            // Editing travelers is allowed only when:
+            // - invoice is UNPAID, OR
+            // - time to departure is greater than 3 days
+            boolean isMoreThan3DaysToDeparture = trip.getDepartureDate() != null
+                    && trip.getDepartureDate().isAfter(LocalDate.now().plusDays(3));
+            if (!isUnpaid && !isMoreThan3DaysToDeparture) {
+                throw new RuntimeException(
+                        "Cannot edit travelers after payment when departure is within 3 days");
+            }
 
             // Check if trip has not departed yet
             if (trip.getDepartureDate().isBefore(LocalDate.now())) {
@@ -198,15 +221,26 @@ public class TourBookingServiceImpl implements TourBookingService {
             int newTotalTravelers = request.getTravelers().size();
             int currentTravelers = booking.getSeatsBooked();
 
-            // If number of travelers changed, check seat availability
+            // If payment already completed, allow only traveler info updates (no
+            // add/remove)
+            if (isPaid && newTotalTravelers != currentTravelers) {
+                throw new RuntimeException("Cannot add or remove travelers after payment is completed");
+            }
+
+            // If number of travelers changed (only when Unpaid), check seat availability
             if (newTotalTravelers != currentTravelers) {
-                int availableSeats = trip.getTotalSeats() - trip.getBookedSeats() + currentTravelers;
-                if (newTotalTravelers > availableSeats) {
-                    throw new RuntimeException("Not enough available seats. Available: " + availableSeats);
+                int seatDifference = newTotalTravelers - currentTravelers;
+
+                // If adding travelers, check availability
+                if (seatDifference > 0) {
+                    int availableSeats = trip.getTotalSeats() - trip.getBookedSeats();
+                    if (seatDifference > availableSeats) {
+                        throw new RuntimeException("Not enough available seats. Available: " + availableSeats);
+                    }
                 }
 
                 // Update trip booked seats
-                trip.setBookedSeats(trip.getBookedSeats() - currentTravelers + newTotalTravelers);
+                trip.setBookedSeats(trip.getBookedSeats() + seatDifference);
                 tripRepository.save(trip);
 
                 // Update booking seats and price
@@ -215,10 +249,10 @@ public class TourBookingServiceImpl implements TourBookingService {
                 booking.setTotalPrice(newPrice);
 
                 // Update invoice if exists
-                invoiceRepository.findByBookingId(id).ifPresent(invoice -> {
+                if (invoice != null) {
                     invoice.setTotalAmount(newPrice);
                     invoiceRepository.save(invoice);
-                });
+                }
             }
 
             // Delete old travelers (soft delete)
@@ -302,10 +336,10 @@ public class TourBookingServiceImpl implements TourBookingService {
         tourBookingRepository.save(booking);
 
         // Update invoice status if paid
-        invoiceRepository.findByBookingId(id).ifPresent(invoice -> {
-            if (invoice.getPaymentStatus() == Invoice.PaymentStatus.PAID) {
-                invoice.setPaymentStatus(Invoice.PaymentStatus.REFUNDED);
-                invoiceRepository.save(invoice);
+        invoiceRepository.findByBookingId(id).ifPresent(inv -> {
+            if (inv.getPaymentStatus() == Invoice.PaymentStatus.PAID) {
+                inv.setPaymentStatus(Invoice.PaymentStatus.REFUNDED);
+                invoiceRepository.save(inv);
             }
         });
     }
@@ -337,12 +371,12 @@ public class TourBookingServiceImpl implements TourBookingService {
         response.setTravelers(travelerResponses);
 
         // Get invoice
-        invoiceRepository.findByBookingId(booking.getId()).ifPresent(invoice -> {
+        invoiceRepository.findByBookingId(booking.getId()).ifPresent(inv -> {
             TourBookingResponse.InvoiceInfoResponse invoiceInfo = new TourBookingResponse.InvoiceInfoResponse();
-            invoiceInfo.setId(invoice.getId());
-            invoiceInfo.setTotalAmount(invoice.getTotalAmount());
-            invoiceInfo.setPaymentStatus(invoice.getPaymentStatus().name());
-            invoiceInfo.setPaymentMethod(invoice.getPaymentMethod());
+            invoiceInfo.setId(inv.getId());
+            invoiceInfo.setTotalAmount(inv.getTotalAmount());
+            invoiceInfo.setPaymentStatus(inv.getPaymentStatus().name());
+            invoiceInfo.setPaymentMethod(inv.getPaymentMethod());
             response.setInvoice(invoiceInfo);
         });
 

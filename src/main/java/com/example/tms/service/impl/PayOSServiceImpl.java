@@ -32,25 +32,25 @@ import vn.payos.model.v2.paymentRequests.PaymentLinkItem;
 @Service
 @RequiredArgsConstructor
 public class PayOSServiceImpl implements PayOSService {
-    
+
     private final TourBookingRepository tourBookingRepository;
     private final InvoiceRepository invoiceRepository;
-    
+
     @Value("${payos.client-id}")
     private String clientId;
-    
+
     @Value("${payos.api-key}")
     private String apiKey;
-    
+
     @Value("${payos.checksum-key}")
     private String checksumKey;
-    
+
     @Value("${payos.return-url:http://localhost:5173/payment}")
     private String returnUrl;
-    
+
     @Value("${payos.cancel-url:http://localhost:5173/cart}")
     private String cancelUrl;
-    
+
     private PayOS getPayOS() {
         return new PayOS(clientId, apiKey, checksumKey);
     }
@@ -63,19 +63,19 @@ public class PayOSServiceImpl implements PayOSService {
         log.info("Checksum Key: {}", checksumKey != null ? "HAS_VALUE" : "NULL");
         log.info("--------------------------");
     }
-    
+
     @Override
     @Transactional
     public PaymentLinkResponse createPaymentLink(CreatePaymentRequest request) {
         try {
-                // Validate booking exists
-                TourBooking booking = tourBookingRepository.findById(request.getBookingId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
-                String bookingCode = buildBookingCode(booking);
-            
+            // Validate booking exists
+            TourBooking booking = tourBookingRepository.findById(request.getBookingId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+            String bookingCode = buildBookingCode(booking);
+
             // Generate unique order code
             long orderCode = System.currentTimeMillis();
-            
+
             // Prepare item list
             List<PaymentLinkItem> items = new ArrayList<>();
             items.add(PaymentLinkItem.builder()
@@ -83,10 +83,9 @@ public class PayOSServiceImpl implements PayOSService {
                     .quantity(1)
                     .price(request.getAmount().longValue())
                     .build());
-            
-            String description = request.getDescription() != null ? 
-                    request.getDescription() : "DH" + bookingCode;
-            
+
+            String description = request.getDescription() != null ? request.getDescription() : "DH" + bookingCode;
+
             CreatePaymentLinkRequest.CreatePaymentLinkRequestBuilder builder = CreatePaymentLinkRequest.builder()
                     .orderCode(orderCode)
                     .amount(request.getAmount().longValue())
@@ -113,10 +112,10 @@ public class PayOSServiceImpl implements PayOSService {
             // Call PayOS API
             PayOS payOS = getPayOS();
             CreatePaymentLinkResponse response = payOS.paymentRequests().create(paymentData);
-            
-            log.info("Payment link created successfully for booking: {}, orderCode: {}", 
+
+            log.info("Payment link created successfully for booking: {}, orderCode: {}",
                     booking.getId(), orderCode);
-            
+
             // Build response
             return PaymentLinkResponse.builder()
                     .bin(response.getBin())
@@ -131,13 +130,13 @@ public class PayOSServiceImpl implements PayOSService {
                     .checkoutUrl(response.getCheckoutUrl())
                     .qrCode(response.getQrCode())
                     .build();
-                    
+
         } catch (Exception e) {
             log.error("Error creating payment link: ", e);
             throw new RuntimeException("Failed to create payment link: " + e.getMessage());
         }
     }
-    
+
     @Override
     public PaymentInfoResponse getPaymentInfo(Long orderCode) {
         try {
@@ -150,15 +149,14 @@ public class PayOSServiceImpl implements PayOSService {
             throw new RuntimeException("Failed to get payment info: " + e.getMessage());
         }
     }
-    
+
     @Override
     public PaymentInfoResponse cancelPaymentLink(Long orderCode, String cancellationReason) {
         try {
             PayOS payOS = getPayOS();
             PaymentLink response = payOS.paymentRequests().cancel(
-                    orderCode, 
-                    cancellationReason != null ? cancellationReason : "User cancelled"
-            );
+                    orderCode,
+                    cancellationReason != null ? cancellationReason : "User cancelled");
 
             log.info("Payment link cancelled for orderCode: {}", orderCode);
 
@@ -169,22 +167,22 @@ public class PayOSServiceImpl implements PayOSService {
             throw new RuntimeException("Failed to cancel payment link: " + e.getMessage());
         }
     }
-    
+
     @Override
     @Transactional
     public PaymentInfoResponse verifyAndUpdatePayment(UUID bookingId, Long orderCode) {
         try {
             // Get payment info from PayOS
             PaymentInfoResponse paymentInfo = getPaymentInfo(orderCode);
-            
+
             // If payment is successful, update booking
             if ("PAID".equals(paymentInfo.getStatus())) {
                 TourBooking booking = tourBookingRepository.findById(bookingId)
                         .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
-                invoiceRepository.findByBookingId(bookingId).ifPresent(invoice -> {
-                    invoice.setPaymentStatus(Invoice.PaymentStatus.PAID);
-                    invoiceRepository.save(invoice);
+                invoiceRepository.findByBookingId(bookingId).ifPresent(inv -> {
+                    inv.setPaymentStatus(Invoice.PaymentStatus.PAID);
+                    invoiceRepository.save(inv);
                     log.info("Invoice updated to PAID for booking: {}", bookingId);
                 });
 
@@ -193,33 +191,33 @@ public class PayOSServiceImpl implements PayOSService {
 
                 log.info("Booking status updated to CONFIRMED for booking: {}", bookingId);
             }
-            
+
             return paymentInfo;
-            
+
         } catch (Exception e) {
             log.error("Error verifying payment: ", e);
             throw new RuntimeException("Failed to verify payment: " + e.getMessage());
         }
     }
-    
+
     @Override
     @Transactional
     public void handleWebhook(Map<String, Object> webhookData) {
         try {
             // Verify webhook signature
             PayOS payOS = getPayOS();
-            
+
             @SuppressWarnings("unchecked")
             Map<String, Object> data = (Map<String, Object>) webhookData.get("data");
-            
+
             if (data == null) {
                 log.warn("Webhook data is null");
                 return;
             }
-            
+
             Object orderCodeObj = data.get("orderCode");
             Long orderCode = null;
-            
+
             if (orderCodeObj instanceof Integer) {
                 orderCode = ((Integer) orderCodeObj).longValue();
             } else if (orderCodeObj instanceof Long) {
@@ -227,27 +225,27 @@ public class PayOSServiceImpl implements PayOSService {
             } else if (orderCodeObj instanceof String) {
                 orderCode = Long.parseLong((String) orderCodeObj);
             }
-            
+
             if (orderCode == null) {
                 log.warn("Order code is null in webhook");
                 return;
             }
-            
+
             String code = (String) webhookData.get("code");
-            
+
             // If payment successful
             if ("00".equals(code)) {
                 log.info("Payment webhook received for orderCode: {}", orderCode);
-                
+
                 // Find booking by description or other means
                 // Note: You may need to store orderCode in booking for lookup
                 // For now, we log the webhook
-                
+
                 // TODO: Implement booking lookup and update logic
-                log.info("Payment successful for order: {}, amount: {}", 
+                log.info("Payment successful for order: {}, amount: {}",
                         orderCode, data.get("amount"));
             }
-            
+
         } catch (Exception e) {
             log.error("Error handling webhook: ", e);
         }
@@ -275,4 +273,3 @@ public class PayOSServiceImpl implements PayOSService {
         return "BK" + idStr.substring(0, Math.min(6, idStr.length()));
     }
 }
-
