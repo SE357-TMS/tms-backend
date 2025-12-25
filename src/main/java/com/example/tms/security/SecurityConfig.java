@@ -44,11 +44,10 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/customer/tours/search").permitAll()
                     .requestMatchers("/api/v1/customer/tours/start-locations").permitAll()
                     .requestMatchers("/api/v1/customer/tours/*/favorite").permitAll() // GET is public, POST requires auth in controller
-                    .requestMatchers("/api/v1/routes/*/detail").permitAll() // Route detail page
-                    .requestMatchers("/api/v1/routes/*").permitAll() // Route info
+                    .requestMatchers("/api/v1/routes/**").permitAll() // All route endpoints (detail, full, images, etc.)
                     .requestMatchers("/api/v1/trips/route/*/available").permitAll() // Available trips
                     .requestMatchers("/api/v1/trips/route/*/nearest").permitAll() // Nearest trip
-                    .requestMatchers("/api/v1/images/routes/*/images").permitAll() // Route gallery
+                    .requestMatchers("/api/v1/images/routes/**").permitAll() // Route images
                     .requestMatchers("/admin/**").hasAuthority("ADMIN")
                     .requestMatchers("/staff/**").hasAuthority("STAFF")
                     .requestMatchers("/customer/**").hasAuthority("CUSTOMER")
