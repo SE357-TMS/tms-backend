@@ -1,6 +1,7 @@
 package com.example.tms.service.impl;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -46,8 +47,27 @@ public class TripServiceImpl implements TripService {
                 .filter(r -> r.getDeletedAt() == 0)
                 .orElseThrow(() -> new RuntimeException("Route not found"));
 
-        if (request.getReturnDate().isBefore(request.getDepartureDate())) {
+        // Validation 1: Departure date must be in the future
+        LocalDate today = LocalDate.now();
+        if (request.getDepartureDate().isBefore(today) ||
+                request.getDepartureDate().isEqual(today)) {
+            throw new RuntimeException("Departure date must be in the future");
+        }
+
+        // Validation 2: Return date must be after departure date
+        if (request.getReturnDate().isBefore(request.getDepartureDate()) ||
+                request.getReturnDate().isEqual(request.getDepartureDate())) {
             throw new RuntimeException("Return date must be after departure date");
+        }
+
+        // Validation 3: Check if date range matches route duration
+        long daysDiff = ChronoUnit.DAYS.between(
+                request.getDepartureDate(),
+                request.getReturnDate());
+        if (route.getDurationDays() != null && daysDiff != route.getDurationDays()) {
+            throw new RuntimeException(
+                    String.format("Date range (%d days) must match route duration (%d days)",
+                            daysDiff, route.getDurationDays()));
         }
 
         Trip trip = new Trip();
@@ -139,9 +159,31 @@ public class TripServiceImpl implements TripService {
             trip.setStatus(request.getStatus());
         }
 
-        // Validate dates
-        if (trip.getReturnDate().isBefore(trip.getDepartureDate())) {
+        // Validate dates after all updates
+        LocalDate today = LocalDate.now();
+
+        // Validation 1: Departure date must be in the future (if not already passed)
+        if (trip.getDepartureDate().isBefore(today)) {
+            // Allow updates to trips that have already departed (for status changes, etc.)
+            log.warn("Updating trip {} with past departure date", id);
+        }
+
+        // Validation 2: Return date must be after departure date
+        if (trip.getReturnDate().isBefore(trip.getDepartureDate()) ||
+                trip.getReturnDate().isEqual(trip.getDepartureDate())) {
             throw new RuntimeException("Return date must be after departure date");
+        }
+
+        // Validation 3: Check if date range matches route duration
+        if (trip.getRoute().getDurationDays() != null) {
+            long daysDiff = ChronoUnit.DAYS.between(
+                    trip.getDepartureDate(),
+                    trip.getReturnDate());
+            if (daysDiff != trip.getRoute().getDurationDays()) {
+                throw new RuntimeException(
+                        String.format("Date range (%d days) must match route duration (%d days)",
+                                daysDiff, trip.getRoute().getDurationDays()));
+            }
         }
 
         Trip updated = tripRepository.save(trip);
