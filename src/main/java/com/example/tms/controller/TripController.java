@@ -43,8 +43,8 @@ public class TripController {
 
     @Operation(summary = "Create trip", description = "Create a new trip (Admin/Staff only)")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Trip created successfully"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Trip created successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input")
     })
     @SecurityRequirement(name = "Bearer Authentication")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'STAFF')")
@@ -57,8 +57,8 @@ public class TripController {
 
     @Operation(summary = "Get trip by ID", description = "Retrieve trip details by ID")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Trip retrieved successfully"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Trip not found")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Trip retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Trip not found")
     })
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<TripResponse>> getById(
@@ -69,7 +69,7 @@ public class TripController {
 
     @Operation(summary = "Get all trips", description = "Retrieve a paginated list of trips with optional filters")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Trips retrieved successfully")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Trips retrieved successfully")
     })
     @GetMapping
     public ResponseEntity<ApiResponse<PaginationResponse<TripResponse>>> getAll(
@@ -87,8 +87,8 @@ public class TripController {
 
     @Operation(summary = "Update trip", description = "Update trip by ID (Admin/Staff only)")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Trip updated successfully"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Trip not found")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Trip updated successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Trip not found")
     })
     @SecurityRequirement(name = "Bearer Authentication")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'STAFF')")
@@ -102,8 +102,8 @@ public class TripController {
 
     @Operation(summary = "Delete trip", description = "Delete trip by ID (Admin/Staff only)")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Trip deleted successfully"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Trip not found")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Trip deleted successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Trip not found")
     })
     @SecurityRequirement(name = "Bearer Authentication")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'STAFF')")
@@ -113,10 +113,25 @@ public class TripController {
         tripService.delete(id);
         return ResponseEntity.ok(ApiResponse.success("Trip deleted successfully"));
     }
-    
+
+    @Operation(summary = "Cancel trip", description = "Cancel a trip by changing its status to CANCELED (Admin/Staff only)")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Trip canceled successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Trip not found"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Trip cannot be canceled")
+    })
+    @SecurityRequirement(name = "Bearer Authentication")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'STAFF')")
+    @PutMapping("/{id}/cancel")
+    public ResponseEntity<ApiResponse<TripResponse>> cancelTrip(
+            @Parameter(description = "Trip ID") @PathVariable UUID id) {
+        TripResponse response = tripService.cancelTrip(id);
+        return ResponseEntity.ok(ApiResponse.success("Trip canceled successfully", response));
+    }
+
     @Operation(summary = "Get available trips by route", description = "Get all available trips for a route (departure date >= today + 3 days)")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Available trips retrieved successfully")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Available trips retrieved successfully")
     })
     @GetMapping("/route/{routeId}/available")
     public ResponseEntity<ApiResponse<List<TripAvailableDatesResponse>>> getAvailableTripsByRoute(
@@ -124,10 +139,10 @@ public class TripController {
         List<TripAvailableDatesResponse> response = tripService.getAvailableTripsByRouteId(routeId);
         return ResponseEntity.ok(ApiResponse.success("Available trips retrieved successfully", response));
     }
-    
+
     @Operation(summary = "Get nearest available trip", description = "Get the nearest available trip for a route")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Nearest trip retrieved successfully")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Nearest trip retrieved successfully")
     })
     @GetMapping("/route/{routeId}/nearest")
     public ResponseEntity<ApiResponse<TripAvailableDatesResponse>> getNearestAvailableTrip(
@@ -136,4 +151,3 @@ public class TripController {
         return ResponseEntity.ok(ApiResponse.success("Nearest trip retrieved successfully", response));
     }
 }
-
